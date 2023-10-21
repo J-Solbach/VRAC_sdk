@@ -51,5 +51,13 @@ public:
     virtual void onExit(Event&) override;
 };
 
+class MoveGameElement : public State {
+public:
+    MoveGameElement(QString tag, QVariantMap params) : State(tag, params) {}
+
+    virtual void onEntry(Event&) override;
+    virtual void onExit(Event&) override;
+};
+
 
 #endif // BASICACTIONS_H

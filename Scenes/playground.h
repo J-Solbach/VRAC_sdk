@@ -16,9 +16,10 @@ public:
 
     GameElement* popElement(QString groupName, GameElement *e);
     GameElement* popElement(QString groupName, QString name);
+    GameElement* popElement(QString groupName, size_t index);
 
     const QMap<QString, QVector<GameElement*>> &elements() const { return mElements;}
-    QVector<GameElement*> getElementGroup(QString groupName) const;
+    QVector<GameElement*> & getElementGroup(QString groupName);
     GameElement* getClosestElement(QString groupName, QPointF currentPos);
 
     const QVector<Obstacle>& obstacles() const {return mObstacles;}

@@ -41,7 +41,10 @@ void TakeGameElement::onEntry(Event &)
     QString elementGroup = mParams["group"].toMap()["selected"].toString();
     QString tag = mParams["tag"].toMap()["selected"].toString();
 
-    GameElement *element = GameState::get()->playground().popElement(elementGroup, tag);
+    GameElement *element = [&](){
+        if (tag != "") return GameState::get()->playground().popElement(elementGroup, tag);
+        else return GameState::get()->playground().popElement(elementGroup, size_t{0});
+    }();
 
     if (element != nullptr) {
      // add to inventory ?
@@ -53,3 +56,23 @@ void TakeGameElement::onExit(Event &)
 {
 
 }
+
+void MoveGameElement::onEntry(Event &)
+{
+    QString fromGroup = mParams["from"].toMap()["selected"].toString();
+    QString toGroup = mParams["to"].toMap()["selected"].toString();
+    QString tag = mParams["tag"].toMap()["selected"].toString();
+
+    GameElement *element = [&](){
+        if (tag != "") return GameState::get()->playground().popElement(fromGroup, tag);
+        else return GameState::get()->playground().popElement(fromGroup, size_t{0});
+        }();
+
+    GameState::get()->playground().addElement(toGroup, element);
+}
+
+void MoveGameElement::onExit(Event &)
+{
+
+}
+

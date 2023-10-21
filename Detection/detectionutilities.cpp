@@ -7,8 +7,8 @@ QPointF DetectionUtilities::calculatePosition(const QPointF &pos, int currentAng
 {
     QPointF calculatedPos = {};
     double rad = (angle + currentAngle) * M_PI / 180.0;
-    calculatedPos.setX(pos.x() + dist * qSin(rad));
-    calculatedPos.setY(pos.y() + dist * qCos(rad));
+    calculatedPos.setX(pos.x() + dist * qCos(rad));
+    calculatedPos.setY(pos.y() + dist * qSin(rad));
     return calculatedPos;
 }
 
@@ -16,7 +16,7 @@ QPointF DetectionUtilities::calculatePosition(const QPointF &pos, double current
 {
     QPointF calculatedPos = {};
     rad += currentRad;
-    calculatedPos.setX(pos.x() + dist * qSin(rad));
-    calculatedPos.setY(pos.y() + dist * qCos(rad));
+    calculatedPos.setX(pos.x() + dist * qCos(rad));
+    calculatedPos.setY(pos.y() + dist * qSin(rad));
     return calculatedPos;
 }

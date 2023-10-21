@@ -24,7 +24,7 @@ JsonTask::JsonTask(QString fileName, QString dir) : ITask(fileName)
 
     QJsonObject preconditions = json["preconditions"].toObject();
     QJsonObject effects = json["effects"].toObject();
-    mCost = json["cost"].toObject();
+    mCost = json["cost"].toInt();
     mValid = json["validity"].toObject();
 
     setPreconditions(preconditions.toVariantMap());
@@ -51,11 +51,7 @@ void JsonTask::run()
 
 int JsonTask::cost(const QVariantMap &) const
 {
-    if (mCost["distToElem"].isString()) {
-        //calculate the path to object entry point and its cost
-    }
-
-    return 10;
+    return mCost;
 }
 
 bool JsonTask::isValid() const

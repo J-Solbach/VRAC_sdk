@@ -40,7 +40,8 @@ Plan Planner::findCheapestPlan(QVector<Plan>& plans, const QVariantMap& blackBoa
             if (task != nullptr) totalCost += task->cost(blackBoard);
         }
 
-        if (cheapest.isEmpty() || totalCost < cheapestCost)
+        if (cheapest.isEmpty() || totalCost < cheapestCost
+            || (totalCost == cheapestCost && plan.size() < cheapest.size()))
         {
             cheapest = plan;
         }

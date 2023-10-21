@@ -26,7 +26,7 @@ void Playground::clearElements()
 void Playground::addElement(QString groupName, GameElement* element)
 {
     addItem(element);
-    mElements[groupName].push_back(std::move(element));
+    mElements[groupName].push_back(element);
 }
 
 void Playground::removeElement(QString groupName, QString name)
@@ -39,13 +39,13 @@ void Playground::removeElement(QString groupName, QString name)
 
 GameElement *Playground::popElement(QString groupName, GameElement *e)
 {
-    auto group = getElementGroup(groupName);
+    auto & group = getElementGroup(groupName);
     return group.takeAt(group.indexOf(e));
 }
 
 GameElement *Playground::popElement(QString groupName, QString name)
 {
-    auto group = getElementGroup(groupName);
+    auto & group = getElementGroup(groupName);
 
     auto itObj = std::find_if(
       group.begin(), group.end(),
@@ -59,7 +59,13 @@ GameElement *Playground::popElement(QString groupName, QString name)
     return *itObj;
 }
 
-QVector<GameElement *> Playground::getElementGroup(QString groupName) const
+GameElement *Playground::popElement(QString groupName, size_t index)
+{
+    auto & group = getElementGroup(groupName);
+    return group.takeAt(index);
+}
+
+QVector<GameElement *> & Playground::getElementGroup(QString groupName)
 {
     return mElements[groupName];
 }

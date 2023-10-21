@@ -19,7 +19,7 @@ public:
 private:
     Stm* mStm;
 
-    QJsonObject mCost;
+    int mCost;
     QJsonObject mValid;
 };
 
