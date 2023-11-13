@@ -22,9 +22,7 @@ SOURCES += \
     Detection/detectionmanager.cpp \
     Detection/detectionutilities.cpp \
     Detection/sensor.cpp \
-    JSON_overlay/jsongoal.cpp \
     JSON_overlay/jsonstatemachine.cpp \
-    JSON_overlay/jsontask.cpp \
     Scenes/obstacle.cpp \
     Scenes/playground.cpp \
     Scenes/robot.cpp \
@@ -34,9 +32,6 @@ SOURCES += \
     Strategy/STM/stm.cpp \
     Strategy/STM/stmmanager.cpp \
     Strategy/STM/transition.cpp \
-    gamestate.cpp \
-    Strategy/GOAP/planner.cpp \
-    Strategy/GOAP/goapmanager.cpp \
     Strategy/strategymanager.cpp
 
 HEADERS += \
@@ -51,9 +46,7 @@ HEADERS += \
     Detection/detectionmanager.h \
     Detection/detectionutilities.h \
     Detection/sensor.h \
-    JSON_overlay/jsongoal.h \
     JSON_overlay/jsonstatemachine.h \
-    JSON_overlay/jsontask.h \
     Scenes/playground.h \
     Scenes/robot.h \
     Strategy/Actions/actionfactory.h \
@@ -72,7 +65,7 @@ HEADERS += \
     Strategy/GOAP/goapmanager.h \
     Strategy/GOAP/task.h \
     Strategy/strategymanager.h \
-    Utils/Singleton.h
+    Utils/Singleton.h \
 
 QMAKE_CXXFLAGS += -Werror
 
