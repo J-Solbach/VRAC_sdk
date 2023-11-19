@@ -21,10 +21,10 @@ public:
         return true;
     }
 
-    [[nodiscard]] const std::string_view & name() const {return name_;}
-    [[nodiscard]] const world_state_snapshot_t & preconditions() const {return preconditions_;}
-    [[nodiscard]] const world_state_snapshot_t & desired_world_state() const {return desired_world_state_;}
-    [[nodiscard]] unsigned int priority(const world_state_snapshot_t & ws) const{return std::invoke(priority_calculator_, ws);}
+    const std::string_view & name() const {return name_;}
+    const world_state_snapshot_t & preconditions() const {return preconditions_;}
+    const world_state_snapshot_t & desired_world_state() const {return desired_world_state_;}
+    unsigned int priority(const world_state_snapshot_t & ws) const{return std::invoke(priority_calculator_, ws);}
 
 private:
     const std::string_view name_;

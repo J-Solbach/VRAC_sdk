@@ -3,29 +3,17 @@
 
 #include <QString>
 #include <QObject>
-#include <QSet>
+#include <set>
 
-class State;
-struct Event;
+#include "Strategy/STM/event.h"
 
-class Transition : public QObject
-{
-    Q_OBJECT
-public:
-    Transition(const QString &value);
-
-    State *sourceState() const;
-    void setSourceState(State *newSourceState);
-
-    void addTargetState (State *newTargetState);
-    const QSet<State *> &targetStates() const;
-    void setTargetStates(const QSet<State *> &newTargetStates);
-
-    bool eventTest(Event &e);
-
-private:
-    QString mValue;
-    State *mSourceState;
-    QSet <State*> mTargetStates;
+struct transition {
+    std::string target_state;
+    Event event;
 };
+
+constexpr bool event_test(const transition & transition, const Event & e) {
+    return (transition.event == e);
+}
+
 #endif // TRANSITION_H

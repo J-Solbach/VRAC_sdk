@@ -15,11 +15,11 @@ public:
         , cost_calculator_(std::move(cost_calculator)) {
     }
 
-    [[nodiscard]] bool run(const world_state_snapshot_t & ws) const {return std::invoke(runner_, ws);}
-    [[nodiscard]] unsigned int cost() const {return std::invoke(cost_calculator_);}
-    [[nodiscard]] const std::string_view & name() const {return name_;}
-    [[nodiscard]] const world_state_snapshot_t & preconditions() const {return preconditions_;}
-    [[nodiscard]] const world_state_snapshot_t & effects() const {return effects_;}
+    bool run(const world_state_snapshot_t & ws) const {return std::invoke(runner_, ws);}
+    unsigned int cost() const {return std::invoke(cost_calculator_);}
+    const std::string_view & name() const {return name_;}
+    const world_state_snapshot_t & preconditions() const {return preconditions_;}
+    const world_state_snapshot_t & effects() const {return effects_;}
 
 private:
     const std::string_view name_;

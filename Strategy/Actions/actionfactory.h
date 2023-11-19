@@ -1,26 +1,12 @@
 #ifndef ACTIONFACTORY_H
 #define ACTIONFACTORY_H
 
-#include <QObject>
-#include <QMap>
+#include <unordered_map>
+#include <string>
 
-#include "Utils/Singleton.h"
-
-class State;
-
-class ActionFactory : public Singleton<ActionFactory>
-{
-    friend class Singleton<ActionFactory>;
-
-public:
-    State* getAction(QString tag, QVariantMap params);
-
-    void addAction(QString tag, std::function<State *(QString, QVariantMap)>);
-
-private:
-    ActionFactory();
-
-    QMap<QString, std::function<State *(QString, QVariantMap)>> mMap;
+template<typename action_t>
+struct ActionFactory {
+    std::unordered_map<std::string, std::function<action_t *(std::string, typename action_t::param_t)>> map;
 };
 
 #endif // ACTIONFACTORY_H

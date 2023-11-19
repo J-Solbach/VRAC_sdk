@@ -1,7 +1,6 @@
 #pragma once
 
 #include <deque>
-#include "range/v3/all.hpp"
 #include "planner.hpp"
 
 template<typename world_state_type, typename goal_type, typename action_type>

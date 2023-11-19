@@ -5,11 +5,12 @@
 #include <iostream>
 #include <ranges>
 #include <numeric>
+#include <range/v3/all.hpp>
 
 namespace planner::details {
 
     template <typename Node, typename action_pool_type, typename world_state_snapshot_t>
-    [[nodiscard]] bool build_plans(Node & step, action_pool_type & action_pool, const world_state_snapshot_t & current_world_state) {
+    bool build_plans(Node & step, action_pool_type & action_pool, const world_state_snapshot_t & current_world_state) {
 
         bool has_follow_up = false;
 
@@ -62,23 +63,22 @@ namespace planner::details {
     }
 
     template <typename plan_type, typename Node>
-    [[nodiscard]] static std::vector<plan_type> gather_all_plans(const Node& node) {
+    static std::vector<plan_type> gather_all_plans(const Node& node) {
 
         if (node.childrens.empty() && node.action != nullptr)
         {
             return std::vector<plan_type>{plan_type{node.action}};
         }
 
-        return node.childrens;
-//            | std::ranges::views::transform([](const auto & children){return gather_all_plans<plan_type>(children);})
-//            | std::ranges::views::join
-//            | std::ranges::views::transform([&node](const auto & value){
-//                plan_type childPlan = value;
-//                if (node.action != nullptr) childPlan.push_back(node.action);
-//                return childPlan;
-//            })
-//               | std::ranges::to<std::vector>;
-
+        return node.childrens
+            | ranges::views::transform([](const auto & children){return gather_all_plans<plan_type>(children);})
+            | ranges::views::join
+            | ranges::views::transform([&node](const auto & value){
+                plan_type childPlan = value;
+                if (node.action != nullptr) childPlan.push_back(node.action);
+                return childPlan;
+            })
+               | ranges::to<std::vector>;
     }
 
 
@@ -88,12 +88,12 @@ namespace planner::details {
         if (plans.empty()) return plan_type{};
 
         auto pairs = plans
-                     | std::ranges::views::transform([](const auto & plan){
+                     | ranges::views::transform([](const auto & plan){
                            auto total_cost = std::accumulate(std::cbegin(plan), std::cend(plan), 0, [](unsigned int result, const auto & action){ return result += action->cost();});
                         return std::pair{plan, total_cost};
                     });
 
-        return std::get<0>(*std::ranges::min_element(pairs, [](const auto & lhs, const auto & rhs){return lhs.second < rhs.second; }));
+        return std::get<0>(*ranges::min_element(pairs, [](const auto & lhs, const auto & rhs){return lhs.second < rhs.second; }));
     }
 }
 
