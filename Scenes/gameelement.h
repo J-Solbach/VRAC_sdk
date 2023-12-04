@@ -7,6 +7,8 @@ class GameElement : public QGraphicsItem
 {
 public:
     explicit GameElement(QGraphicsItem* parent = nullptr) : QGraphicsItem(parent) {}
+    virtual ~GameElement() {}
+
     GameElement(std::string name) {mName = name;}
     QPointF entryPoint() const { return scenePos();}
 
@@ -20,8 +22,5 @@ private:
     QPointF mEntryPoint;
     std::string mName;
 };
-
-
-
 
 #endif // GAMEELEMENT_H

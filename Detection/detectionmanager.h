@@ -41,22 +41,18 @@ public :
 
     static void addToGroup(QPointF point, std::vector<QPolygonF>& groups)
     {
-        bool groupDetected = false;
-        for(auto& group : groups)
-        {
+        auto detectedGroup = ranges::find_if(groups, [&point](const auto & group){
             QLineF dist = QLineF(group.boundingRect().center(), point);
-            if(dist.length() < 50)
-            {
-                group.append(point);
-                groupDetected = true;
-            }
-        }
+            return (dist.length() < 50);
+        });
 
-        if(!groupDetected)
-        {
+        if (detectedGroup == std::end(groups)) {
             QPolygonF poly;
             poly.append(point);
             groups.push_back(std::move(poly));
+        }
+        else {
+            detectedGroup->push_back(point);
         }
     }
 

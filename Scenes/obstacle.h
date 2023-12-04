@@ -6,8 +6,7 @@
 
 struct Obstacle
 {
-    Obstacle(QPointF centerPos, int radius, qreal robot_width, const QVector<QPointF>& outer= QVector<QPointF>())
-    {
+    Obstacle(QPointF centerPos, int radius, qreal robot_width, const QVector<QPointF>& outer= QVector<QPointF>()) {
         poly = outer;
         // can be reduced to improve calculation time but will reduce precision of the avoidance
         poly.append(generatePolygon(centerPos, radius));
@@ -25,8 +24,7 @@ struct Obstacle
         uiItemAvoidance->setPen(QPen(Qt::green, 20));
     }
 
-    Obstacle(QPolygonF poly, QPolygonF polyAvoidance = QPolygonF())
-    {
+    Obstacle(QPolygonF poly, QPolygonF polyAvoidance = QPolygonF()) {
         uiItem = std::make_shared<QGraphicsPolygonItem>(poly);
 
         if (polyAvoidance.isEmpty()) return;
@@ -34,8 +32,7 @@ struct Obstacle
         uiItemAvoidance->setParentItem(uiItem.get());
     }
 
-    static QPolygonF generatePolygon(QPointF centerPos, int radius)
-    {
+    static QPolygonF generatePolygon(QPointF centerPos, int radius) {
         QPolygonF octogon;
         const int vertices = 8;
         for(int i=0; i< vertices; i++)

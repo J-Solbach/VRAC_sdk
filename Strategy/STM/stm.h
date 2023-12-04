@@ -13,7 +13,8 @@ class Stm : public state_t
 {
 
 public:
-    Stm(std::string name) : state_t(name){ connect(this, &state_t::sendEvent, this, &state_t::onEvent, Qt::QueuedConnection); }
+    Stm(std::string name, state_t::context_type & ctx) : state_t(name), ctx(ctx){
+    }
 
     ~Stm()
     {
@@ -24,19 +25,8 @@ public:
 
     void update() {
         Event e{"NoEvent"};
-        onEntry(e);
-        onEvent(e);
-    }
-
-    virtual void onEntry(state_t::event_t & e) override  {
-        if (mInitialState == nullptr) {
-            finished();
-            return;
-        }
-
-        mCurrentStates.clear();
-        mCurrentStates.push_back(mInitialState);
-        mInitialState->onEntry(e);
+        onEntry(ctx,e);
+        onEvent(ctx,e);
     }
 
     void addState(std::string tag, state_t * s)
@@ -52,10 +42,19 @@ public:
     void setCurrentStates(const std::vector<state_t *> &newCurrentStates) { mCurrentStates = newCurrentStates; }
     void setInitialState(state_t *s) { mInitialState = s; }
 
-signals:
-    void finished();
+    virtual void onEntry(state_t::context_type &, Event  e) override  {
+        if (mInitialState == nullptr) {
+            return;
+        }
 
-public slots:
+        mCurrentStates.clear();
+        mCurrentStates.push_back(mInitialState);
+
+        qDebug() << mInitialState->objectName() << "onEntry";
+        mInitialState->onEntry(ctx,e);
+        state_t::sendEvent(Event{"NoEvent"});
+    }
+
     virtual std::vector<std::string> onEvent(Event e) override
     {
         const auto state_transition_map = mCurrentStates
@@ -85,13 +84,15 @@ public slots:
                              })
                            | ranges::to<std::vector>;
 
-        ranges::for_each(to_be_removed, [&](const auto state){
-            state->onExit(e);
-            ranges::remove_if(mCurrentStates, [&state](auto * s) {return state == s;});
+        ranges::for_each(to_be_removed, [&](auto *state){
+            qDebug() << state->objectName() << "onExit";
+            state->onExit(ctx, e);
+            ranges::erase(mCurrentStates, ranges::remove(mCurrentStates, state), std::end(mCurrentStates));
         });
 
-        ranges::for_each(to_be_added, [&](const auto state){
-            state->onEntry(e);
+        ranges::for_each(to_be_added, [&](auto * state){
+            qDebug() << state->objectName() << "onEntry";
+            state->onEntry(ctx, e);
         });
 
         mCurrentStates.insert(std::end(mCurrentStates), std::begin(to_be_added), std::end(to_be_added) );
@@ -103,6 +104,7 @@ private:
     std::unordered_map<std::string, state_t*> mStates;
     std::vector<state_t*> mCurrentStates;
     state_t* mInitialState;
+    state_t::context_type & ctx;
 };
 
 #endif // STM_H

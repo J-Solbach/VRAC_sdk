@@ -14,12 +14,8 @@ class MessagePublisher: public QObject, public Singleton<MessagePublisher>
     Q_OBJECT
     friend class Singleton<MessagePublisher>;
     public :
-    MessagePublisher()
-    {
-
-    }
-    ~MessagePublisher()
-    {
+    MessagePublisher() {}
+    ~MessagePublisher() {
         for (auto dump : mDumpSubscribers) {
             if (dump != nullptr) delete dump;
         }
@@ -29,14 +25,9 @@ class MessagePublisher: public QObject, public Singleton<MessagePublisher>
         }
     }
 
-    void subscribe(Subscriber *newSub)
-    {
-        mSubscribers.append(newSub);
-    }
+    void subscribe(Subscriber *newSub) { mSubscribers.append(newSub); }
     void subscribeAsDump(Subscriber *dump) {mDumpSubscribers.append(dump);}
-    void sendMessage(const QString targetNode, int id, const QByteArray data = QByteArray())
-    {
-        qDebug() << "Test message";
+    void sendMessage(const QString targetNode, int id, const QByteArray data = QByteArray()) {
         for (auto dump : mDumpSubscribers) {
             dump->onMessage(id, data);
         }

@@ -4,10 +4,10 @@
 #include <QThread>
 #include <QTimer>
 #include <QRectF>
-#include <QVector>
+#include <vector>
 
 #include "Scenes/obstacle.h"
-#include "pathstep.h"
+#include "path_step.h"
 #include "path_planner.h"
 
 struct holonome;
@@ -21,12 +21,12 @@ signals :
     void blocked(); // Emitted when no path is found and blocked delay expired
     void emergency_stop(); // Emitted when the path collide with an ennemy
     void move_to(PathStep, double theta_end = 0xFFFF);
-    void new_path_found(const QVector<PathStep> &);
+    void new_path_found(const std::vector<PathStep> &);
 
 public slots:
     virtual void set_new_goal(QPointF pos, double thetaEnd) = 0;
-    virtual void set_obstacles(const QVector<Obstacle> & obstacles) = 0;
-    virtual void set_static_obstacles(const QVector<Obstacle> & static_obstacles) = 0;
+    virtual void set_obstacles(const std::vector<Obstacle> & obstacles) = 0;
+    virtual void set_static_obstacles(const std::vector<Obstacle> & static_obstacles) = 0;
     virtual void set_current_pos(QPointF pos) = 0;
     virtual void find_new_path() = 0;
 
@@ -59,26 +59,32 @@ public :
     void set_ignore_static_obstacles(bool newIgnoreStaticObstacle) {ignore_static_obstacles = newIgnoreStaticObstacle;}
     void set_collision_hysteresis(int newCollisionHysteresis) {collision_hysteresis = newCollisionHysteresis;}
 
-    QVector<Obstacle> get_all_obstacles() {
+    std::vector<Obstacle> get_all_obstacles() {
         auto all_obstacles = obstacles;
-        if (!ignore_static_obstacles) all_obstacles << static_obstacles;
+        if (!ignore_static_obstacles) {
+            all_obstacles.insert(all_obstacles.end(), static_obstacles.begin(), static_obstacles.end()) ;
+        }
         return all_obstacles;
     }
 
     virtual void set_new_goal(QPointF goal, double theta) override
     {
         theta_end = theta;
-        QVector<PathStep> new_path = {PathStep(current_pos, goal, hitbox.width())};
-        emit new_path_found(new_path);
+        path = {PathStep(current_pos, goal, hitbox.width())};
+        emit new_path_found(path);
     }
-    virtual void set_obstacles(const QVector<Obstacle> & obs) override { obstacles = std::move(obs); }
-    virtual void set_static_obstacles(const QVector<Obstacle> & s_obs) override { static_obstacles = std::move(s_obs); }
-    virtual void set_current_pos(QPointF pos) override { current_pos = pos; }
+    virtual void set_obstacles(const std::vector<Obstacle> & obs) override { obstacles = std::move(obs); }
+    virtual void set_static_obstacles(const std::vector<Obstacle> & s_obs) override { static_obstacles = std::move(s_obs); }
+    virtual void set_current_pos(QPointF pos) override {
+        current_pos = pos;
+        if (std::empty(path)) return;
+        path.front().setStart(current_pos);
+    }
     virtual void find_new_path() override
     {
-        QVector<PathStep> newPath = path_planner::findPath(path, get_all_obstacles(), hitbox);
+        std::vector<PathStep> newPath = path_planner::findPath(path.front().start, path.back().goal,  get_all_obstacles(), hitbox);
 
-        if (newPath.isEmpty()) {
+        if (std::empty(newPath)) {
             if (!blocked_timer.isActive()) blocked_timer.start();
             return;
         }
@@ -86,22 +92,22 @@ public :
         if (blocked_timer.isActive()) blocked_timer.stop();
 
         path = newPath;
-        emit new_path_found(newPath);
+        emit new_path_found(path);
     }
-    virtual void update() override
-    {
-        drive_policy::update(*this);
-    }
+
+    virtual void update() override { drive_policy::update(*this); }
+    void set_hitbox(const QRectF &newHitbox) { hitbox = newHitbox;}
+
     virtual void move_finished() override
     {
-        path.pop_front();
+        path.erase(path.begin());
         emit move_to(path.front());
     }
 
 private :
-    QVector<Obstacle> obstacles;
-    QVector<Obstacle> static_obstacles;
-    QVector<PathStep> path;
+    std::vector<Obstacle> obstacles;
+    std::vector<Obstacle> static_obstacles;
+    std::vector<PathStep> path;
 
     QPointF current_pos;
     QRectF hitbox;

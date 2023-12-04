@@ -11,7 +11,7 @@ public:
 
     }
 
-    QVariantList read();
+    QVariantList read() {}
 
 signals:
 

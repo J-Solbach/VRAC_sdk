@@ -38,7 +38,6 @@ HEADERS += \
     Strategy/STM/state.h \
     Strategy/STM/stm.h \
     Strategy/STM/transition.h \
-    Utils/utils.h \
     Scenes/obstacle.h \
     Scenes/gameelement.h \
     Strategy/strategymanager.h \

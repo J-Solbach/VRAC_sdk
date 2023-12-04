@@ -16,6 +16,7 @@ signals:
 
 public slots:
     virtual void jackPulled() = 0;
+    virtual void update() = 0;
 };
 
 template<typename strategy_type>
@@ -23,51 +24,58 @@ class StrategyManager : public strategy_manager_signals
 {
 public:
 
-    StrategyManager(strategy_type && strategy, QObject *parent = nullptr) : strategy_manager_signals(parent), strategy(strategy)
+    StrategyManager(strategy_type && strategy, QObject *parent = nullptr) :
+        strategy_manager_signals(parent),
+        strategy(strategy)
     {
-        mGameTimer.setInterval(std::chrono::seconds(100));
-        mGoBackHomeTimer.setInterval(std::chrono::seconds(90));
-        mFunnyActionTimer.setInterval(std::chrono::seconds(98));
+        game_timer.setInterval(std::chrono::seconds(100));
+        go_back_home_timer.setInterval(std::chrono::seconds(90));
+        funny_action_timer.setInterval(std::chrono::seconds(98));
+        strategy_ticker.setInterval(std::chrono::milliseconds(10));
 
-        mGameTimer.setSingleShot(true);
-        mGoBackHomeTimer.setSingleShot(true);
-        mFunnyActionTimer.setSingleShot(true);
+        game_timer.setSingleShot(true);
+        go_back_home_timer.setSingleShot(true);
+        funny_action_timer.setSingleShot(true);
 
-        connect(&mGameTimer, &QTimer::timeout, this, &StrategyManager::end);
-        connect(&mGoBackHomeTimer, &QTimer::timeout, this, &StrategyManager::goBackHome);
-        connect(&mFunnyActionTimer, &QTimer::timeout, this, &StrategyManager::doFunnyAction);
+        connect(&game_timer,        &QTimer::timeout, this, &StrategyManager::end);
+        connect(&go_back_home_timer,  &QTimer::timeout, this, &StrategyManager::goBackHome);
+        connect(&funny_action_timer, &QTimer::timeout, this, &StrategyManager::doFunnyAction);
+        connect(&strategy_ticker,   &QTimer::timeout, this, &StrategyManager::update);
     }
 
-    void setFunnyActionTimer(int seconds) { mFunnyActionTimer.setInterval(std::chrono::seconds(seconds)); }
-    void setGoBackHomeTimer(int seconds) { mGoBackHomeTimer.setInterval(std::chrono::seconds(seconds)); }
-    bool gameEnded() const { return mGameEnded; }
+    void setFunnyActionTimer(std::chrono::seconds seconds) { funny_action_timer.setInterval(std::chrono::seconds(seconds)); }
+    void setGoBackHomeTimer(std::chrono::seconds seconds) { go_back_home_timer.setInterval(std::chrono::seconds(seconds)); }
+    void setStrategyTicker(std::chrono::seconds seconds) { strategy_ticker.setInterval(seconds); }
+    bool gameEnded() const { return game_ended; }
+
+    void start() {
+        strategy_ticker.start();
+    }
 
     void reset() {
-        mGameTimer.stop();
-        mGoBackHomeTimer.stop();
-        mFunnyActionTimer.stop();
+        game_timer.stop();
+        go_back_home_timer.stop();
+        funny_action_timer.stop();
+        strategy_ticker.stop();
     }
 
-    virtual void jackPulled() override
-    {
-        mGameTimer.start();
-        mGoBackHomeTimer.start();
-        mFunnyActionTimer.start();
-        //GameState::get()->setState("hasJack", false);
+    virtual void jackPulled() override {
+        game_timer.start();
+        go_back_home_timer.start();
+        funny_action_timer.start();
     }
 
-    void update() {
-        strategy.update();
-    }
+    virtual void update() override{ strategy.update(); }
 
 private:
-    QTimer mGameTimer;
-    QTimer mGoBackHomeTimer;
-    QTimer mFunnyActionTimer;
+    QTimer game_timer;
+    QTimer go_back_home_timer;
+    QTimer funny_action_timer;
+    QTimer strategy_ticker;
 
     strategy_type strategy;
 
-    bool mGameEnded;
+    bool game_ended;
 };
 
 #endif // STRATEGYMANAGER_H
