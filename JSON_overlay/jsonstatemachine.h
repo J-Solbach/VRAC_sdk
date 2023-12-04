@@ -6,8 +6,9 @@
 #include "Strategy/STM/stm.h"
 #include "../Strategy/STM/transition.h"
 
+template<typename context_type>
 struct action_factory{
-    using action_t = state<int, nlohmann::json>;
+    using action_t = state<context_type, nlohmann::json>;
     using factory_type = std::function<action_t *(std::string, typename action_t::params_type)>;
     using meta_factory_type = std::unordered_map<std::string_view, factory_type>;
 

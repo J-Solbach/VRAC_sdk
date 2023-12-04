@@ -26,7 +26,7 @@ public:
     void update() {
         Event e{"NoEvent"};
         onEntry(ctx,e);
-        onEvent(ctx,e);
+        onEvent(e);
     }
 
     void addState(std::string tag, state_t * s)
