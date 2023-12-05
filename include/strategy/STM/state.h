@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QObject>
-#include <QVariant>
 #include <set>
 #include <functional>
 #include <range/v3/all.hpp>
@@ -29,6 +28,7 @@ class state : public state_signals_slots
 public:
     using context_type = context_t;
     using params_type = params_t;
+    using signal_slot_handler_type = state_signals_slots;
 
     state(std::string name) : state_signals_slots(), mCheckSum(std::hash<std::string>{}(name)) {
        ;

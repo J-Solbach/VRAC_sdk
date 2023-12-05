@@ -1,10 +1,7 @@
-#ifndef STRATEGYMANAGER_H
-#define STRATEGYMANAGER_H
+#pragma once
 
 #include <QObject>
 #include <QTimer>
-#include <QThread>
-#include <QDebug>
 
 class strategy_manager_signals : public QObject {
     Q_OBJECT
@@ -79,5 +76,3 @@ private:
 
     bool game_ended;
 };
-
-#endif // STRATEGYMANAGER_H

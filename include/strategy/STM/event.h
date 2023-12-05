@@ -1,7 +1,6 @@
 #pragma once
 
-#include <QString>
-#include <QObject>
+#include <string>
 
 struct Event
 {

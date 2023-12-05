@@ -17,7 +17,12 @@ public:
     Stm(std::string name, state_t::context_type & ctx) : state_t(name), ctx(ctx){
     }
 
-    Stm(std::string name, state_t::context_type & ctx, std::vector<state_t> states) : state_t(name), mStates(states), ctx(ctx) {
+    Stm(std::string name, state_t::context_type & ctx, state_t* initial_state, std::unordered_map<std::string, state_t*> && states) : state_t(name), mStates(states), mInitialState(initial_state), ctx(ctx) {
+
+        for (const auto & entry : mStates) {
+            state_t * s = entry.second;
+            QObject::connect(s, &state_t::sendEvent, this, &Stm::onEvent, Qt::QueuedConnection);
+        }
     }
 
     ~Stm()
@@ -34,11 +39,6 @@ public:
     }
 
     void update() {
-    }
-
-    void addState(std::string tag, state_t * s) {
-        connect(s, &state_t::sendEvent, this, &state_t::onEvent, Qt::QueuedConnection);
-        mStates[tag] = s;
     }
 
     const auto &states() const { return mStates; }

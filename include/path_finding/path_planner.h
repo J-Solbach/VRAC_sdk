@@ -1,5 +1,4 @@
-#ifndef PATH_PLANNER_H
-#define PATH_PLANNER_H
+#pragma once
 
 #include <QPointF>
 #include <vector>
@@ -153,5 +152,3 @@ static std::vector<PathStep> findPath(const std::vector<PathStep> &path, const o
 }
 
 }
-
-#endif // PATH_PLANNER_H

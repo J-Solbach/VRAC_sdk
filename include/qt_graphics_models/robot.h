@@ -1,5 +1,4 @@
-#ifndef ROBOT_H
-#define ROBOT_H
+#pragma once
 
 #include <QGraphicsPixmapItem>
 #include <QGraphicsSceneDragDropEvent>
@@ -35,5 +34,3 @@ private:
     int mTheta;
     QMap<QString, std::shared_ptr<QGraphicsItem>> mItemHandlers;
 };
-
-#endif // ROBOT_H

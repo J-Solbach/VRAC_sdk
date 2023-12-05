@@ -1,9 +1,6 @@
 #pragma once
 
-#include <QString>
-#include <QObject>
-#include <set>
-
+#include <string>
 #include "strategy/STM/event.h"
 
 struct transition {

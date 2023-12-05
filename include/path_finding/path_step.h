@@ -1,5 +1,4 @@
-#ifndef PATH_STEP_H
-#define PATH_STEP_H
+#pragma once
 
 #include <QPointF>
 #include <QPen>
@@ -50,5 +49,3 @@ struct PathStep
 
     std::shared_ptr<QGraphicsPathItem> uiItem;
 };
-
-#endif // PATH_STEP_H

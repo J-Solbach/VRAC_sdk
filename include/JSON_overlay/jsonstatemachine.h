@@ -38,7 +38,7 @@ Stm<state<context_t, nlohmann::json>>* make_stm_from_json(context_t & ctx, std::
             {
                 std::string action_type = j_action.at("action").get<std::string>();
                 std::string action_tag = j_action.at("tag").get<std::string>();
-                return action_factory_t::make_action(action_type, action_tag, j_action);
+                return action_factory_t::make_action(action_type, action_tag, j_action.at("parameters"));
             }
         }();
 
@@ -61,22 +61,18 @@ Stm<state<context_t, nlohmann::json>>* make_stm_from_json(context_t & ctx, std::
         return std::pair{tag , newState};
     };
 
-    Stm<state<context_t, nlohmann::json>>* stm = new Stm<state_type>(filename, ctx);
-
     std::unordered_map<std::string, state_type*> states;
+    state_type* entry_state;
     ranges::for_each(json.at("actions"), [&, first = true](const auto & j_action) mutable {
         auto action = make_action(j_action);
         if (first) {
-            stm->setInitialState(action.second);
+            entry_state = action.second;
             first = false;
         }
-
         states.emplace(action);
     });
 
-    stm->setStates(std::move(states));
-
-    return stm;
+    return new Stm<state_type>(filename, ctx, entry_state, std::move(states));
 }
 
 #include <fmt/format.h>
