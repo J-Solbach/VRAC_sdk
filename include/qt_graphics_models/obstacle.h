@@ -4,42 +4,44 @@
 #include <QGraphicsPolygonItem>
 #include <QPen>
 
-struct Obstacle
+struct obstacle
 {
-    Obstacle(QPointF centerPos, int radius, qreal robot_width, const QVector<QPointF>& outer= QVector<QPointF>()) {
+    obstacle(QPointF center_pos, int radius, qreal robot_width, const QVector<QPointF>& outer = QVector<QPointF>()) {
         poly = outer;
         // can be reduced to improve calculation time but will reduce precision of the avoidance
-        poly.append(generatePolygon(centerPos, radius));
+        poly.append(generatePolygon(center_pos, radius));
 
-        uiItem = std::make_shared<QGraphicsPolygonItem>(poly);
-        uiItem->setFlags(QGraphicsItem::ItemIsMovable);
-        uiItemAvoidance = std:: make_shared<QGraphicsPolygonItem>();
-        uiItemAvoidance->setParentItem(uiItem.get());
+        ui_item = std::make_shared<QGraphicsPolygonItem>(poly);
+        ui_item->setFlags(QGraphicsItem::ItemIsMovable);
+        ui_item_avoidance = std:: make_shared<QGraphicsPolygonItem>();
+        ui_item_avoidance->setParentItem(ui_item.get());
 
-        polyAvoidance = generatePolygon(centerPos, radius + robot_width * 0.8);
-        uiItemAvoidance->setPolygon(polyAvoidance);
+        poly_avoidance = generatePolygon(center_pos, radius + robot_width * 0.8);
+        ui_item_avoidance->setPolygon(poly_avoidance);
 
-        uiItem->setBrush(QBrush(Qt::black));
-        uiItem->setOpacity(0.5);
-        uiItemAvoidance->setPen(QPen(Qt::green, 20));
+        ui_item->setBrush(QBrush(Qt::black));
+        ui_item->setOpacity(0.5);
+        ui_item_avoidance->setPen(QPen(Qt::green, 20));
     }
 
-    Obstacle(QPolygonF poly, QPolygonF polyAvoidance = QPolygonF()) {
-        uiItem = std::make_shared<QGraphicsPolygonItem>(poly);
+    obstacle(QPolygonF poly, QPolygonF poly_avoidance = QPolygonF()) : poly(poly), poly_avoidance(poly_avoidance) {
+        ui_item = std::make_shared<QGraphicsPolygonItem>(poly);
+        ui_item->setPen(QPen(Qt::red, 10));
+        ui_item->setOpacity(1);
 
-        if (polyAvoidance.isEmpty()) return;
-        uiItemAvoidance = std::make_shared<QGraphicsPolygonItem>(polyAvoidance);
-        uiItemAvoidance->setParentItem(uiItem.get());
+        if (poly_avoidance.isEmpty()) return;
+        ui_item_avoidance = std::make_shared<QGraphicsPolygonItem>(poly_avoidance);
+        ui_item_avoidance->setParentItem(ui_item.get());
     }
 
-    static QPolygonF generatePolygon(QPointF centerPos, int radius) {
+    static QPolygonF generatePolygon(QPointF center_pos, int radius) {
         QPolygonF octogon;
         const int vertices = 8;
         for(int i=0; i< vertices; i++)
         {
             QPointF octoPoint;
-            octoPoint.setX(centerPos.x() + radius * cos((i + 0.5) * 2 * 3.1415 / vertices));
-            octoPoint.setY(centerPos.y() + radius * sin( (i + 0.5) * 2 * 3.1415 / vertices));
+            octoPoint.setX(center_pos.x() + radius * cos((i + 0.5) * 2 * 3.1415 / vertices));
+            octoPoint.setY(center_pos.y() + radius * sin( (i + 0.5) * 2 * 3.1415 / vertices));
             octogon.append(octoPoint);
         }
 
@@ -47,7 +49,7 @@ struct Obstacle
     }
 
     QPolygonF poly;
-    QPolygonF polyAvoidance;
-    std::shared_ptr<QGraphicsPolygonItem> uiItem;
-    std::shared_ptr<QGraphicsPolygonItem> uiItemAvoidance;
+    QPolygonF poly_avoidance;
+    std::shared_ptr<QGraphicsPolygonItem> ui_item;
+    std::shared_ptr<QGraphicsPolygonItem> ui_item_avoidance;
 };

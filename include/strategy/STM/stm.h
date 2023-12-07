@@ -3,6 +3,7 @@
 #include "event.h"
 
 #include <fmtlog/fmtlog.h>
+#include <fmt/color.h>
 #include <range/v3/all.hpp>
 #include <QObject>
 #include <set>
@@ -14,58 +15,51 @@ class Stm : public state_t
 {
 
 public:
-    Stm(std::string name, state_t::context_type & ctx) : state_t(name), ctx(ctx){
-    }
 
-    Stm(std::string name, state_t::context_type & ctx, state_t* initial_state, std::unordered_map<std::string, state_t*> && states) : state_t(name), mStates(states), mInitialState(initial_state), ctx(ctx) {
-
-        for (const auto & entry : mStates) {
-            state_t * s = entry.second;
-            QObject::connect(s, &state_t::sendEvent, this, &Stm::onEvent, Qt::QueuedConnection);
+    Stm(std::string name, state_t::context_type & ctx, state_t* initial_state, std::unordered_map<std::string, state_t*> && states) :
+        state_t(name),
+        states(states),
+        entry_state(initial_state),
+        ctx(ctx)
+    {
+        for (const auto & state : states) {
+            state_t * s = state.second;
+            QObject::connect(s, &state_t::send_event, this, &Stm::on_event, Qt::QueuedConnection);
         }
     }
 
-    ~Stm()
-    {
-        for (auto * state : mStates | ranges::views::values) {
+    ~Stm() {
+        for (auto * state : states | ranges::views::values) {
             delete state;
         }
     }
 
     void start() {
         Event e{"NoEvent"};
-        onEntry(ctx,e);
-        onEvent(e);
+        on_entry(ctx,e);
+        on_event(e);
     }
 
-    void update() {
-    }
+    void update() {}
 
-    const auto &states() const { return mStates; }
-    void setStates(std::unordered_map<std::string, state_t *> && newStates) { mStates = std::move(newStates); }
-
-    std::vector<state_t *> &currentStates() { return mCurrentStates; }
-    void setCurrentStates(const std::vector<state_t *> &newCurrentStates) { mCurrentStates = newCurrentStates; }
-    void setInitialState(state_t *s) { mInitialState = s; }
-
-    virtual void onEntry(state_t::context_type &, Event  e) override  {
-        if (mInitialState == nullptr) {
+    virtual void on_entry(state_t::context_type &, Event  e) override  {
+        if (entry_state == nullptr) {
             return;
         }
 
-        mCurrentStates.clear();
-        mCurrentStates.push_back(mInitialState);
+        current_states.clear();
+        current_states.push_back(entry_state);
 
-        FMTLOG(fmtlog::INF, "{} on Entry", mInitialState);
-        mInitialState->onEntry(ctx,e);
-        state_t::sendEvent(Event{"NoEvent"});
+        FMTLOG(fmtlog::INF, "Entering state machine {} -> {}", state_t::name, entry_state);
+        entry_state->on_entry(ctx,e);
+        state_t::send_event(Event{"NoEvent"});
     }
 
-    virtual std::vector<std::string> onEvent(Event e) override
+    virtual std::vector<std::string> on_event(Event e) override
     {
-        const auto state_transition_map = mCurrentStates
+        const auto state_transition_map = current_states
                                           | ranges::views::transform([&](auto * state){
-                                                return std::pair{state, state->onEvent(e)};
+                                                return std::pair{state, state->on_event(e)};
                                             })
                                           | ranges::views::filter([](const auto & entry) {
                                                 auto [_, target_states] = entry;
@@ -75,7 +69,7 @@ public:
 
         // no transitions in sub states. checking as a state
         if (std::empty(state_transition_map)) {
-            return state_t::onEvent(e);
+            return state_t::on_event(e);
         }
 
         auto to_be_removed = state_transition_map
@@ -86,29 +80,35 @@ public:
                            | ranges::views::values
                            | ranges::views::join
                            | ranges::views::transform([&](const auto & state_tag){
-                                 return mStates.at(state_tag);
+                                 return states.at(state_tag);
                              })
                            | ranges::to<std::vector>;
 
+        FMTLOG(fmtlog::INF, "{} {} {}",
+               fmt::format("{}",fmt::join(to_be_removed, "")),
+               fmt::format("--[{}]-->", e.value),
+               fmt::format("{}",fmt::join(to_be_added, ""))
+        );
+
         ranges::for_each(to_be_removed, [&](auto *state){
-            FMTLOG(fmtlog::INF, "{} on Exit", state);
-            state->onExit(ctx, e);
-            ranges::erase(mCurrentStates, ranges::remove(mCurrentStates, state), std::end(mCurrentStates));
+            state->on_exit(ctx, e);
+            ranges::erase(current_states, ranges::remove(current_states, state), std::end(current_states));
         });
-
         ranges::for_each(to_be_added, [&](auto * state){
-            FMTLOG(fmtlog::INF, "{} on Entry", state);
-            state->onEntry(ctx, e);
+            state->on_entry(ctx, e);
         });
 
-        mCurrentStates.insert(std::end(mCurrentStates), std::begin(to_be_added), std::end(to_be_added) );
-        state_t::sendEvent(Event{"NoEvent"});
+        current_states.insert(std::end(current_states), std::begin(to_be_added), std::end(to_be_added) );
+        state_t::send_event(Event{"NoEvent"});
         return std::vector<std::string>{};
     }
 
+    const auto &get_states() const { return states; }
+    std::vector<state_t *> &get_current_states() { return current_states; }
+
 private:
-    std::unordered_map<std::string, state_t*> mStates;
-    std::vector<state_t*> mCurrentStates;
-    state_t* mInitialState;
+    std::unordered_map<std::string, state_t*> states;
+    std::vector<state_t*> current_states;
+    state_t* entry_state;
     state_t::context_type & ctx;
 };

@@ -3,11 +3,11 @@
 #include <QGraphicsPixmapItem>
 #include <QGraphicsSceneDragDropEvent>
 
-class Robot : public QObject, public QGraphicsPixmapItem
+class robot_graphic_item : public QObject, public QGraphicsPixmapItem
 {
     Q_OBJECT
 public:
-    Robot() { setFlags(QGraphicsItem::ItemIsMovable); }
+    robot_graphic_item() { setFlags(QGraphicsItem::ItemIsMovable); }
 
     void setPos(QPointF pos) { QGraphicsPixmapItem::setPos(pos - boundingRect().center()); }
     QPointF pos() { return sceneBoundingRect().center(); }

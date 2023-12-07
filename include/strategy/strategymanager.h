@@ -8,12 +8,12 @@ class strategy_manager_signals : public QObject {
 public:
     explicit strategy_manager_signals(QObject *parent = nullptr) : QObject(parent) {}
 signals:
-    void doFunnyAction();
-    void goBackHome();
+    void do_funny_action();
+    void go_back_home();
     void end();
 
 public slots:
-    virtual void jackPulled() = 0;
+    virtual void jack_pulled() = 0;
     virtual void update() = 0;
 };
 
@@ -36,18 +36,18 @@ public:
         funny_action_timer.setSingleShot(true);
 
         connect(&game_timer,        &QTimer::timeout, this, &strategyManager::end);
-        connect(&go_back_home_timer,  &QTimer::timeout, this, &strategyManager::goBackHome);
-        connect(&funny_action_timer, &QTimer::timeout, this, &strategyManager::doFunnyAction);
+        connect(&go_back_home_timer,  &QTimer::timeout, this, &strategyManager::go_back_home);
+        connect(&funny_action_timer, &QTimer::timeout, this, &strategyManager::do_funny_action);
         connect(&strategy_ticker,   &QTimer::timeout, this, &strategyManager::update);
 
         strategy_ticker.start(std::chrono::milliseconds(10));
         strategy->start();
     }
 
-    void setFunnyActionTimer(std::chrono::seconds seconds) { funny_action_timer.setInterval(std::chrono::seconds(seconds)); }
-    void setGoBackHomeTimer(std::chrono::seconds seconds) { go_back_home_timer.setInterval(std::chrono::seconds(seconds)); }
-    void setstrategyTicker(std::chrono::seconds seconds) { strategy_ticker.setInterval(seconds); }
-    bool gameEnded() const { return game_ended; }
+    void set_do_funny_action_time(std::chrono::seconds seconds) { funny_action_timer.setInterval(std::chrono::seconds(seconds)); }
+    void set_go_back_home_time(std::chrono::seconds seconds) { go_back_home_timer.setInterval(std::chrono::seconds(seconds)); }
+    void set_strategy_ticker_period(std::chrono::seconds seconds) { strategy_ticker.setInterval(seconds); }
+    bool has_game_ended() const { return game_ended; }
 
     void reset() {
         game_timer.stop();
@@ -56,13 +56,13 @@ public:
         strategy_ticker.stop();
     }
 
-    virtual void jackPulled() override {
+    virtual void jack_pulled() override {
         game_timer.start();
         go_back_home_timer.start();
         funny_action_timer.start();
     }
 
-    virtual void update() override{
+    virtual void update() override {
         strategy->update();
     }
 

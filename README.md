@@ -53,6 +53,51 @@ or add it to the target include directories if you are using CMake.
 
 ## Usage
 
+### Settting up a playground
+
+To easily create a view of the playground with Qt you need to setup a QGraphicsView in your .ui file.
+
+Then add the following code :
+
+```c++
+// In a file with your ui constants
+constexpr std::string_view playground_image_resource = ":/UI/Images/vinyle_table.svg";
+constexpr unsigned int playground_width = 3000; // in mm
+constexpr unsigned int playground_height = 2000; // in mm
+constexpr double scaling = 0.2; // scaling between QGraphicsView and reality
+
+// In your mainwindow.cpp file
+#include "qt_graphics_models/playground.h"
+
+QRectF sceneRect(0, 0, playground_width, playground_height);
+QImage image = QIcon(playground_image_resource.data()).pixmap(sceneRect.width(), sceneRect.height()).toImage();
+
+Playground playground; // should be part of your member variables (if deleted, the ui won't show anything)
+playground.setSceneRect(sceneRect);
+playground.setBackgroundBrush(image);
+ui->playground->setAttribute(Qt::WA_AcceptTouchEvents); // only usefull if you want to move your robot/obstacles via the mouse
+ui->playground->scale(scaling, scaling);
+ui->playground->setScene(&playground);
+```
+
+### setting up your robot
+
+To add your robot on the playground just do this :
+
+```c++
+// in a file for your ui constants
+constexpr std::string_view robot_image_resource = ":/UI/Images/robot.png";
+constexpr double robot_scaling = 5; // how many times you need to multiply the img size to have 1pixel =  1mm in real life
+
+// in your mainwindow.cpp
+#include "qt_graphics_models/robot.h"
+QPixmap robotPixmap = QPixmap(robot_image_resource.data());
+Robot robot; // should be part of your member variables (if deleted, the ui won't show anything)
+robot.setPixmap(robotPixmap.scaled(robotPixmap.width() * robot_scaling, robotPixmap.height() * robot_scaling));
+robot.setPos(QPointF(500,500)); // initial pose (0,0) if not setup
+playground.addItem(&robot);
+```
+
 ### strategy
 
 To setup a strategy manager, you have three choices. You can use a state machine (either manualy setup using the STM/stm.h, STM/state.h etc. or via the JSON_overlay if you are also using our [strategy editor](https://github.com/J-Solbach/VRAC_strategy_editor)) or you can use the GOAP AI.
@@ -123,7 +168,7 @@ auto manager = new strategyManager(stm);
 
 ### path finding
 
-The path finding part needs a little setup to function. First you need to setup a robot and a playground from the qt_graphics_model. Then you have to select a policy, setup the robot boundingRect and its position. Then you can connect the slots of the path finder.
+The path finding part needs a little setup to function. First you need to setup a robot and a playground from the qt_graphics_model. Then you have to select a policy (adapted to your motor drive system), setup the robot boundingRect and its position. Then you can connect the slots of the path finder.
 
 ```c+++
 path_finder<holonome> pf; // or path_finder<differential> path_finder;
@@ -133,7 +178,7 @@ pf.set_current_pos(robot.pos());
 connect(&foo, &foo::newGoal, &pf, &path_finder<holonome>::set_new_goal); //
 connect(&bar, &bar:::newObstacles, &pf, &path_finder<holonome>::set_obstacles); // Detection Manager
 connect(this, &MainWindow::newObstacles, &playground, &Playground::onNewObstacles);
-connect(&pf, &path_finder<selected_policy>::new_path_found, &playground, &Playground::onNewPath);
+connect(&pf, &path_finder<selected_policy>::new_path_found, &playground, &Playground::onnew_path);
 connect(&robot, &Robot::posChanged, &pf, &path_finder<holonome>::set_current_pos);
 ```
 

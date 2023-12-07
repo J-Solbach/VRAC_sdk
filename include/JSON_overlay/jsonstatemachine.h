@@ -29,7 +29,7 @@ Stm<state<context_t, nlohmann::json>>* make_stm_from_json(context_t & ctx, std::
     nlohmann::json json = nlohmann::json::parse(f);
 
     const auto make_action = [&](const nlohmann::json & j_action) -> std::pair<std::string, state_type *> {
-        auto * newState = [&]() -> state<context_t, nlohmann::json> * {
+        auto * new_state = [&]() -> state<context_t, nlohmann::json> * {
             if (j_action.contains("file"))
             {
                 return make_stm_from_json<action_factory_t>(ctx,j_action.at("file").get<std::string>(), dir);
@@ -48,17 +48,17 @@ Stm<state<context_t, nlohmann::json>>* make_stm_from_json(context_t & ctx, std::
                                      j_transition.at("destination").template get<std::string>(),
                                      Event{
                                          j_transition.at("type").template get<std::string>(),
-                                         newState->checkSum()
+                                         new_state->get_checksum()
                                      }
                                  };
                              })
                            | ranges::to<std::vector>;
 
-        newState->set_transitions(std::move(transitions));
+        new_state->set_transitions(std::move(transitions));
 
         std::string tag = j_action.at("tag").get<std::string>();
 
-        return std::pair{tag , newState};
+        return std::pair{tag , new_state};
     };
 
     std::unordered_map<std::string, state_type*> states;

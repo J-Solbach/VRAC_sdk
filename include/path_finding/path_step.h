@@ -4,48 +4,48 @@
 #include <QPen>
 #include <QGraphicsPathItem>
 
-struct PathStep
+struct path_step
 {
     using ui_item_t = std::shared_ptr<QGraphicsPathItem>;
-    PathStep(const QPointF s, const QPointF c1, const QPointF c2, const QPointF g, qreal width) : start(s), checkPoint1(c1), checkPoint2(c2), goal(g) {
+    path_step(const QPointF s, const QPointF c1, const QPointF c2, const QPointF g, qreal width) : start(s), check_point_1(c1), check_point_2(c2), goal(g) {
         QPainterPath bezier;
         bezier.moveTo(s);
-        bezier.cubicTo(checkPoint1, checkPoint2, g);
+        bezier.cubicTo(check_point_1, check_point_2, g);
 
-        uiItem = std::make_shared<QGraphicsPathItem>(bezier);
+        ui_item = std::make_shared<QGraphicsPathItem>(bezier);
         QPen pen(Qt::blue, width);
-        uiItem->setPen(pen);
-        uiItem->setOpacity(0.3);
+        ui_item->setPen(pen);
+        ui_item->setOpacity(0.3);
     }
 
-    PathStep(QPointF s, QPointF g, qreal width) : start(s), checkPoint1(s), checkPoint2(g), goal(g) {
+    path_step(QPointF s, QPointF g, qreal width) : start(s), check_point_1(s), check_point_2(g), goal(g) {
         QPainterPath bezier;
         bezier.moveTo(s);
-        bezier.cubicTo(checkPoint1, checkPoint2, g);
+        bezier.cubicTo(check_point_1, check_point_2, g);
 
-        uiItem = std::make_shared<QGraphicsPathItem>(bezier);
+        ui_item = std::make_shared<QGraphicsPathItem>(bezier);
         QPen pen(Qt::blue, width);
-        uiItem->setPen(pen);
-        uiItem->setOpacity(0.3);
+        ui_item->setPen(pen);
+        ui_item->setOpacity(0.3);
     }
 
     void setStart(const QPointF s)
     {
-        if (start == checkPoint1) {
-            checkPoint1 = s;
+        if (start == check_point_1) {
+            check_point_1 = s;
             start = s;
         }
 
         QPainterPath bezier;
         bezier.moveTo(start);
-        bezier.cubicTo(checkPoint1, checkPoint2, goal);
-        uiItem->setPath(bezier);
+        bezier.cubicTo(check_point_1, check_point_2, goal);
+        ui_item->setPath(bezier);
     }
 
     QPointF start;
-    QPointF checkPoint1;
-    QPointF checkPoint2;
+    QPointF check_point_1;
+    QPointF check_point_2;
     QPointF goal;
 
-    std::shared_ptr<QGraphicsPathItem> uiItem;
+    std::shared_ptr<QGraphicsPathItem> ui_item;
 };

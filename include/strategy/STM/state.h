@@ -12,16 +12,17 @@ class state_signals_slots :  public QObject {
     Q_OBJECT
 public:
     explicit state_signals_slots(){
-        connect(this, &state_signals_slots::sendEvent, this, &state_signals_slots::onEvent, Qt::QueuedConnection);
+        connect(this, &state_signals_slots::send_event, this, &state_signals_slots::on_event, Qt::QueuedConnection);
     }
 
 signals :
-    void sendEvent(Event e);
+    void send_event(Event e);
 
 public slots:
-    virtual std::vector<std::string> onEvent(Event e) = 0;
+    virtual std::vector<std::string> on_event(Event e) = 0;
 };
 
+// TODO RAII
 template<typename context_t, typename params_t>
 class state : public state_signals_slots
 {
@@ -30,41 +31,36 @@ public:
     using params_type = params_t;
     using signal_slot_handler_type = state_signals_slots;
 
-    state(std::string name) : state_signals_slots(), mCheckSum(std::hash<std::string>{}(name)) {
-       ;
-        setObjectName("[" + name + "]");
-        mCheckSum += (rand() %0xFFFF);
+    state(std::string name) :
+        state_signals_slots(),
+        name {"[" + name + "]"},
+        checksum(std::hash<std::string>{}(name))
+    {
+        checksum += (rand() %0xFFFF);
     }
 
-    state(const std::string & name,  const params_t & params) : state_signals_slots(), mParams(params), mCheckSum(std::hash<std::string>{}(name)) {
-        setObjectName("[" + name + "]");
-        mCheckSum += (rand() %0xFFFF);
+    state(const std::string & name,  const params_t & params) :
+        state_signals_slots(), name {"[" + name + "]"},
+        params(params), checksum(std::hash<std::string>{}(name))
+    {
+        checksum += (rand() %0xFFFF);
     }
 
-    const std::vector<transition> &transitions() const { return mTransitions; }
-    void set_transitions(std::vector<transition> && newTransitions) { mTransitions = std::move(newTransitions); }
+    const std::vector<transition> &get_transitions() const { return transitions; }
+    void set_transitions(std::vector<transition> && new_transitions) { transitions = std::move(new_transitions); }
 
-    bool testCheckSum(uint16_t checkSum) {
-        if (checkSum == 0xFFFF) return true;
+    bool test_checksum(uint16_t incoming_checksum) {
+        if (incoming_checksum == 0xFFFF) return true;
+        if (incoming_checksum != checksum ) return false;
+        if (check_counter > 0) check_counter--;
 
-        if (checkSum != mCheckSum ) return false;
-
-        if (mCheckCounter > 0) mCheckCounter--;
-
-        return (mCheckCounter == 0);
+        return (check_counter == 0);
     }
 
-    uint16_t checkSum() {
-        if (mCheckCounter == 0xFFFF) mCheckCounter = 0;
-
-        mCheckCounter++;
-        return mCheckSum;
-    }
-
-    virtual std::vector<std::string> onEvent(Event e) override {
-        return mTransitions
+    virtual std::vector<std::string> on_event(Event e) override {
+        return transitions
                | ranges::views::filter([&](const auto & transition){
-                     return transition.event == e && testCheckSum(e.checksum);
+                     return transition.event == e && test_checksum(e.checksum);
                     })
                 | ranges::views::transform([](const auto & transition) {
                      return transition.target_state;
@@ -72,17 +68,22 @@ public:
                 | ranges::to<std::vector>;
     }
 
-    virtual void onEntry(context_t &, Event) = 0;
-    virtual void onExit(context_t &, Event) {}
+    virtual void on_entry(context_t &, Event) = 0;
+    virtual void on_exit(context_t &, Event) {}
 
-    params_t params() const {return mParams;}
+    params_t get_params() const {return params;}
+    std::string get_name() const {return name;}
+    uint16_t get_checksum() {return checksum;}
+
+    void set_check_counter(std::size_t newCheck_counter) {check_counter = newCheck_counter;}
 
 protected:
-    std::vector<transition> mTransitions;
-    params_t mParams;
+    std::string name;
+    std::vector<transition> transitions;
+    params_t params;
 
-    std::size_t mCheckSum = 0xFFFF;
-    std::size_t mCheckCounter = 0xFFFF;
+    std::size_t checksum = 0xFFFF;
+    std::size_t check_counter = 0xFFFF;
 };
 
 #include <fmt/format.h>
@@ -92,9 +93,20 @@ struct fmt::formatter<state<context_t, params_t>> {
     constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
 
     static auto format(const state<context_t, params_t> & val, format_context& ctx) {
-        // Format val and write the output to ctx.out().
-        return fmt::format_to(ctx.out(), "{}", val.objectName().toStdString());
+        return fmt::format_to(ctx.out(), "{}", val.get_name());
     }
 };
+
+template<typename context_t, typename params_t>
+struct fmt::formatter<state<context_t, params_t>*> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    static auto format(state<context_t, params_t> * val, format_context& ctx) {
+        return fmt::format_to(ctx.out(), "{}", val->get_name());
+    }
+};
+
+
+
 
 

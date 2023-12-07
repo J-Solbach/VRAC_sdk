@@ -8,30 +8,30 @@
 #include "qt_graphics_models/game_element.h"
 #include "path_finding/path_step.h"
 
-class Playground : public QGraphicsScene
+class playground_scene : public QGraphicsScene
 {
 public:
-    explicit Playground(QObject *parent = nullptr) : QGraphicsScene(parent) {}
-    virtual ~Playground() {
+    explicit playground_scene(QObject *parent = nullptr) : QGraphicsScene(parent) {}
+    virtual ~playground_scene() {
     }
 
 public slots:
-
-    void addElement(GameElement* element) {
+    
+    void addElement(game_element* element) {
         addItem(element);
     }
-
-    void onNewObstacles(const std::vector<Obstacle> &newObstacles) {
+    
+    void on_new_obstacles(const std::vector<obstacle> &newObstacles) {
         for (const auto & obstacle : newObstacles) {
-            addItem(obstacle.uiItem.get());
+            addItem(obstacle.ui_item.get());
 
-            if (obstacle.uiItemAvoidance.get() != nullptr)
-                addItem(obstacle.uiItemAvoidance.get());
+            if (obstacle.ui_item_avoidance.get() != nullptr)
+                addItem(obstacle.ui_item_avoidance.get());
         }
     }
 
-    void onNewPath(const std::vector<PathStep>& path) {
+    void on_new_path(const std::vector<path_step>& path) {
         for (const auto & newStep : path)
-            addItem(newStep.uiItem.get());
+            addItem(newStep.ui_item.get());
     }
 };
