@@ -8,6 +8,8 @@
 #include "event.h"
 #include "transition.h"
 
+namespace vrac::strategy::state_machines {
+
 class state_signals_slots :  public QObject {
     Q_OBJECT
 public:
@@ -16,10 +18,10 @@ public:
     }
 
 signals :
-    void send_event(Event e);
+    void send_event(state_machines::event e);
 
 public slots:
-    virtual std::vector<std::string> on_event(Event e) = 0;
+    virtual std::vector<std::string> on_event(state_machines::event e) = 0;
 };
 
 // TODO RAII
@@ -57,7 +59,7 @@ public:
         return (check_counter == 0);
     }
 
-    virtual std::vector<std::string> on_event(Event e) override {
+    virtual std::vector<std::string> on_event(state_machines::event e) override {
         return transitions
                | ranges::views::filter([&](const auto & transition){
                      return transition.event == e && test_checksum(e.checksum);
@@ -68,8 +70,8 @@ public:
                 | ranges::to<std::vector>;
     }
 
-    virtual void on_entry(context_t &, Event) = 0;
-    virtual void on_exit(context_t &, Event) {}
+    virtual void on_entry(context_t &, state_machines::event) = 0;
+    virtual void on_exit(context_t &, state_machines::event) {}
 
     params_t get_params() const {return params;}
     std::string get_name() const {return name;}
@@ -86,26 +88,28 @@ protected:
     std::size_t check_counter = 0xFFFF;
 };
 
+}
+
+#include <fmt/core.h>
 #include <fmt/format.h>
 
 template<typename context_t, typename params_t>
-struct fmt::formatter<state<context_t, params_t>> {
+struct fmt::formatter<vrac::strategy::state_machines::state<context_t, params_t>> {
     constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
 
-    static auto format(const state<context_t, params_t> & val, format_context& ctx) {
+    static auto format(const vrac::strategy::state_machines::state<context_t, params_t> & val, format_context& ctx) {
         return fmt::format_to(ctx.out(), "{}", val.get_name());
     }
 };
 
 template<typename context_t, typename params_t>
-struct fmt::formatter<state<context_t, params_t>*> {
+struct fmt::formatter<vrac::strategy::state_machines::state<context_t, params_t>*> {
     constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
 
-    static auto format(state<context_t, params_t> * val, format_context& ctx) {
+    static auto format(vrac::strategy::state_machines::state<context_t, params_t> * val, format_context& ctx) {
         return fmt::format_to(ctx.out(), "{}", val->get_name());
     }
 };
-
 
 
 

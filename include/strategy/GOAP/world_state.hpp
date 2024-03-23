@@ -3,6 +3,8 @@
 #include <unordered_map>
 #include <functional>
 
+namespace vrac::strategy::goap {
+
 template <typename state_name_t, typename state_type_t>
 class world_state
 {
@@ -32,3 +34,5 @@ public:
 private:
     world_state_observers observers;
 };
+
+}

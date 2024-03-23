@@ -10,6 +10,8 @@
 #include "path_step.h"
 #include "path_planner.h"
 
+namespace vrac::path_finding {
+
 struct holonome;
 struct differential;
 
@@ -25,8 +27,8 @@ signals :
 
 public slots:
     virtual void set_new_goal(QPointF pos, double thetaEnd) = 0;
-    virtual void set_obstacles(const std::vector<obstacle> & obstacles) = 0;
-    virtual void set_static_obstacles(const std::vector<obstacle> & static_obstacles) = 0;
+    virtual void set_obstacles(const std::vector<qt_graphics::models::obstacle> & obstacles) = 0;
+    virtual void set_static_obstacles(const std::vector<qt_graphics::models::obstacle> & static_obstacles) = 0;
     virtual void set_current_pos(QPointF pos) = 0;
     virtual void find_new_path() = 0;
 
@@ -35,7 +37,7 @@ protected slots:
     virtual void move_finished() = 0;
 };
 
-template<typename drive_policy>
+template<typename drive_policy = differential>
 class path_finder : public path_finder_signal_slots {
 
     friend holonome;
@@ -59,7 +61,7 @@ public :
     void set_ignore_static_obstacles(bool newIgnoreStaticObstacle) {ignore_static_obstacles = newIgnoreStaticObstacle;}
     void set_collision_hysteresis(int newCollisionHysteresis) {collision_hysteresis = newCollisionHysteresis;}
     
-    std::vector<obstacle> get_all_obstacles() {
+    std::vector<qt_graphics::models::obstacle> get_all_obstacles() {
         auto all_obstacles = obstacles;
         if (!ignore_static_obstacles) {
             all_obstacles.insert(all_obstacles.end(), static_obstacles.begin(), static_obstacles.end()) ;
@@ -73,8 +75,8 @@ public :
         path = {path_step(current_pos, goal, hitbox.width())};
         emit new_path_found(path);
     }
-    virtual void set_obstacles(const std::vector<obstacle> & obs) override { obstacles = std::move(obs); }
-    virtual void set_static_obstacles(const std::vector<obstacle> & s_obs) override { static_obstacles = std::move(s_obs); }
+    virtual void set_obstacles(const std::vector<qt_graphics::models::obstacle> & obs) override { obstacles = std::move(obs); }
+    virtual void set_static_obstacles(const std::vector<qt_graphics::models::obstacle> & s_obs) override { static_obstacles = std::move(s_obs); }
     virtual void set_current_pos(QPointF pos) override {
         current_pos = pos;
         if (std::empty(path)) return;
@@ -105,8 +107,8 @@ public :
     }
 
 private :
-    std::vector<obstacle> obstacles;
-    std::vector<obstacle> static_obstacles;
+    std::vector<qt_graphics::models::obstacle> obstacles;
+    std::vector<qt_graphics::models::obstacle> static_obstacles;
     std::vector<path_step> path;
 
     QPointF current_pos;
@@ -138,7 +140,6 @@ struct holonome {
 
             emit path_finder.emergency_stop();
         }
-
         path_finder.collision_count = 0;
     }
 };
@@ -147,16 +148,21 @@ struct differential {
     template<typename path_finder_t>
     static void update(path_finder_t & path_finder) {
 
-        if (!path_checker::check_path(path_finder.path, path_finder.get_all_obstacles(), path_finder.hitbox)) {
-            path_finder.collision_count++;
-            if (path_finder.collision_count < path_finder.collision_hysteresis) {
-                return;
+
+        if (path_checker::check_path(path_finder.path, path_finder.get_all_obstacles(), path_finder.hitbox)) {
+            path_finder.collision_count = 0;
+            if (path_finder.delay_timer.isActive()) {
+                path_finder.delay_timer.stop();
             }
-            emit path_finder.emergency_stop();
-            if (!path_finder.delay_timer.isActive()) path_finder.delay_timer.start(); // Calc new Path at timeout
+            return;
         }
-        path_finder.collision_count = 0;
-        if (path_finder.delay_timer.isActive())
-            path_finder.delay_timer.stop();
+
+        path_finder.collision_count++;
+        if (path_finder.collision_count < path_finder.collision_hysteresis) {
+            return;
+        }
+        emit path_finder.emergency_stop();
+        if (!path_finder.delay_timer.isActive()) path_finder.delay_timer.start(); // Calc new Path at timeout
     }
 };
+}

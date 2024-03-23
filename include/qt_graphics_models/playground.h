@@ -8,11 +8,13 @@
 #include "qt_graphics_models/game_element.h"
 #include "path_finding/path_step.h"
 
-class playground_scene : public QGraphicsScene
+namespace vrac::qt_graphics::models {
+
+class playground : public QGraphicsScene
 {
 public:
-    explicit playground_scene(QObject *parent = nullptr) : QGraphicsScene(parent) {}
-    virtual ~playground_scene() {
+    explicit playground(QObject *parent = nullptr) : QGraphicsScene(parent) {}
+    virtual ~playground() {
     }
 
 public slots:
@@ -30,8 +32,9 @@ public slots:
         }
     }
 
-    void on_new_path(const std::vector<path_step>& path) {
+    void on_new_path(const std::vector<path_finding::path_step>& path) {
         for (const auto & newStep : path)
             addItem(newStep.ui_item.get());
     }
 };
+}

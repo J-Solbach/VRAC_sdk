@@ -6,7 +6,7 @@
 #include "path_step.h"
 #include "range/v3/all.hpp"
 
-namespace path_checker
+namespace vrac::path_finding::path_checker
 {
 template<typename obstacles_t>
 static bool is_area_free(QPolygonF &area, const obstacles_t & obstacles) {

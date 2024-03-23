@@ -63,7 +63,7 @@ public :
     void setRobotRadius(qreal newRobotRadius) { mRobotRadius = newRobotRadius; }
 
 signals:
-    void newObstacles(std::vector<obstacle>);
+    void newObstacles(std::vector<vrac::qt_graphics::models::obstacle>);
 
 private slots:
     void update()
@@ -89,7 +89,7 @@ private slots:
         std::vector<QPolygonF>groupedBeaconPoints = make_grouped_points(mBeaconSensors);
         std::vector<QPolygonF>groupedBodyPoints = make_grouped_points(mBodySensors);
         
-        std::vector<obstacle> ennemies;
+        std::vector<vrac::qt_graphics::models::obstacle> ennemies;
         qreal minDist = 100; // to be determined
         // now we have to pair bodypoints and beacon points
         for (auto & beaconGroup : groupedBeaconPoints) {

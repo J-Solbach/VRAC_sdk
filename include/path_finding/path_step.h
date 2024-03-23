@@ -4,6 +4,7 @@
 #include <QPen>
 #include <QGraphicsPathItem>
 
+namespace vrac::path_finding {
 struct path_step
 {
     using ui_item_t = std::shared_ptr<QGraphicsPathItem>;
@@ -49,3 +50,4 @@ struct path_step
 
     std::shared_ptr<QGraphicsPathItem> ui_item;
 };
+}

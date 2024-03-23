@@ -3,6 +3,8 @@
 #include <QGraphicsPixmapItem>
 #include <QGraphicsSceneDragDropEvent>
 
+namespace vrac::qt_graphics::models {
+
 class robot_graphic_item : public QObject, public QGraphicsPixmapItem
 {
     Q_OBJECT
@@ -34,3 +36,5 @@ private:
     int mTheta;
     QMap<QString, std::shared_ptr<QGraphicsItem>> mItemHandlers;
 };
+
+}

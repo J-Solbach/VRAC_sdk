@@ -4,6 +4,8 @@
 #include <QGraphicsPolygonItem>
 #include <QPen>
 
+namespace vrac::qt_graphics::models {
+
 struct obstacle
 {
     obstacle(QPointF center_pos, int radius, qreal robot_width, const QVector<QPointF>& outer = QVector<QPointF>()) {
@@ -53,3 +55,5 @@ struct obstacle
     std::shared_ptr<QGraphicsPolygonItem> ui_item;
     std::shared_ptr<QGraphicsPolygonItem> ui_item_avoidance;
 };
+
+}

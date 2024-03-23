@@ -6,6 +6,10 @@
 #include "strategy/STM/stm.h"
 #include "strategy/STM/transition.h"
 
+namespace vrac::json_overlay {
+
+using namespace strategy::state_machines;
+
 template<typename context_type>
 struct action_factory{
     using action_t = state<context_type, nlohmann::json>;
@@ -20,7 +24,7 @@ struct action_factory{
 };
 
 template<typename action_factory_t, typename context_t>
-Stm<state<context_t, nlohmann::json>>* make_stm_from_json(context_t & ctx, std::string filename, std::string dir)
+Stm<context_t, nlohmann::json>* make_stm_from_json(context_t & ctx, std::string filename, std::string dir)
 {
     using state_type = state<context_t, nlohmann::json>;
 
@@ -46,7 +50,7 @@ Stm<state<context_t, nlohmann::json>>* make_stm_from_json(context_t & ctx, std::
                            | ranges::views::transform([&](const auto & j_transition) -> transition {
                                  return transition {
                                      j_transition.at("destination").template get<std::string>(),
-                                     Event{
+                                     event{
                                          j_transition.at("type").template get<std::string>(),
                                          new_state->get_checksum()
                                      }
@@ -72,7 +76,9 @@ Stm<state<context_t, nlohmann::json>>* make_stm_from_json(context_t & ctx, std::
         states.emplace(action);
     });
 
-    return new Stm<state_type>(filename, ctx, entry_state, std::move(states));
+    return new Stm<context_t, nlohmann::json>(filename, ctx, entry_state, std::move(states));
+}
+
 }
 
 #include <fmt/format.h>
