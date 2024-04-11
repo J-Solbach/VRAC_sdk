@@ -6,6 +6,8 @@
 #include "strategy/STM/stm.h"
 #include "strategy/STM/transition.h"
 
+#include <QDebug>
+
 namespace vrac::json_overlay {
 
 using namespace strategy::state_machines;
@@ -18,7 +20,7 @@ struct action_factory{
 
     static meta_factory_type meta_factory;
 
-    static action_t * make_action(const std::string & action_type, const std::string & action_tag, const action_t::params_type & params) {
+    static action_t * make_action(const std::string & action_type, const std::string & action_tag, const typename action_t::params_type & params) {
         return std::invoke(meta_factory.at(action_type), action_tag, params);
     }
 };
@@ -28,8 +30,9 @@ Stm<context_t, nlohmann::json>* make_stm_from_json(context_t & ctx, std::string 
 {
     using state_type = state<context_t, nlohmann::json>;
 
-    std::string path = dir + filename + ".json";
+    std::string path = fmt::format("{}/{}.json", dir, filename);
     std::ifstream f(path);
+
     nlohmann::json json = nlohmann::json::parse(f);
 
     const auto make_action = [&](const nlohmann::json & j_action) -> std::pair<std::string, state_type *> {

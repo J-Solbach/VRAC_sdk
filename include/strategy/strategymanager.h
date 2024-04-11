@@ -39,9 +39,10 @@ public:
         connect(&go_back_home_timer,  &QTimer::timeout, this, &strategyManager::go_back_home);
         connect(&funny_action_timer, &QTimer::timeout, this, &strategyManager::do_funny_action);
         connect(&strategy_ticker,   &QTimer::timeout, this, &strategyManager::update);
+    }
 
-        strategy_ticker.start(std::chrono::milliseconds(10));
-        strategy->start();
+    virtual ~strategyManager() {
+        delete strategy;
     }
 
     void set_do_funny_action_time(std::chrono::seconds seconds) { funny_action_timer.setInterval(std::chrono::seconds(seconds)); }
@@ -66,6 +67,16 @@ public:
         strategy->update();
     }
 
+    void start() {
+        strategy_ticker.start(std::chrono::milliseconds(10));
+        strategy->start();
+    }
+
+    strategy_type *getStrategy() const
+    {
+        return strategy;
+    }
+
 private:
     QTimer game_timer;
     QTimer go_back_home_timer;
@@ -76,3 +87,5 @@ private:
 
     bool game_ended;
 };
+
+

@@ -75,7 +75,9 @@ public:
 
     params_t get_params() const {return params;}
     std::string get_name() const {return name;}
-    uint16_t get_checksum() {return checksum;}
+    uint16_t get_checksum() {
+        return checksum;
+    }
 
     void set_check_counter(std::size_t newCheck_counter) {check_counter = newCheck_counter;}
 
@@ -85,7 +87,7 @@ protected:
     params_t params;
 
     std::size_t checksum = 0xFFFF;
-    std::size_t check_counter = 0xFFFF;
+    std::size_t check_counter = 1;
 };
 
 }

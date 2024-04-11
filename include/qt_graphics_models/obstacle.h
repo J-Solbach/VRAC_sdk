@@ -8,7 +8,7 @@ namespace vrac::qt_graphics::models {
 
 struct obstacle
 {
-    obstacle(QPointF center_pos, int radius, qreal robot_width, const QVector<QPointF>& outer = QVector<QPointF>()) {
+    obstacle(QPointF center_pos, unsigned int radius, qreal robot_width, const QVector<QPointF>& outer = QVector<QPointF>()) {
         poly = outer;
         // can be reduced to improve calculation time but will reduce precision of the avoidance
         poly.append(generatePolygon(center_pos, radius));
@@ -18,7 +18,7 @@ struct obstacle
         ui_item_avoidance = std:: make_shared<QGraphicsPolygonItem>();
         ui_item_avoidance->setParentItem(ui_item.get());
 
-        poly_avoidance = generatePolygon(center_pos, radius + robot_width * 0.8);
+        poly_avoidance = generatePolygon(center_pos, radius + robot_width);
         ui_item_avoidance->setPolygon(poly_avoidance);
 
         ui_item->setBrush(QBrush(Qt::black));
@@ -36,7 +36,7 @@ struct obstacle
         ui_item_avoidance->setParentItem(ui_item.get());
     }
 
-    static QPolygonF generatePolygon(QPointF center_pos, int radius) {
+    static QPolygonF generatePolygon(QPointF center_pos, unsigned int radius) {
         QPolygonF octogon;
         const int vertices = 8;
         for(int i=0; i< vertices; i++)

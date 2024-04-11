@@ -21,11 +21,7 @@ static bool check_path(const path_t & path, const obstacles_t & obstacles, const
                                 return std::ranges::any_of(obstacles, [&step](const auto & obstacle){
                                    return obstacle.ui_item->collidesWithItem(step.ui_item.get());
                                 });
-        })
-        | ranges::views::transform([&hitbox](const auto & step){
-                                step.ui_item->setPen(QPen(Qt::red, hitbox.width()));
-                                return step;
-                                });
+        });
 
     return std::ranges::empty(invalid_steps);
 }

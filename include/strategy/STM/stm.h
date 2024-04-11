@@ -40,7 +40,6 @@ public:
     void start() {
         event e{"NoEvent"};
         on_entry(ctx,e);
-        on_event(e);
     }
 
     void update() {}

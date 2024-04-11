@@ -11,11 +11,19 @@ class robot_graphic_item : public QObject, public QGraphicsPixmapItem
 public:
     robot_graphic_item() { setFlags(QGraphicsItem::ItemIsMovable); }
 
-    void setPos(QPointF pos) { QGraphicsPixmapItem::setPos(pos - boundingRect().center()); }
+    void setPos(QPointF pos) {
+        QGraphicsPixmapItem::setPos(pos - boundingRect().center());
+        emit posChanged(pos);
+    }
     QPointF pos() { return sceneBoundingRect().center(); }
 
     int theta() const { return mTheta; }
-    void setTheta(int newTheta) { mTheta = newTheta; }
+    void setTheta(int newTheta) {
+        mTheta = newTheta;
+
+        setTransformOriginPoint(boundingRect().center());
+        setRotation(-mTheta);
+    }
 
     void addItemHandler(QString name, QPointF pos, int radius) {
         mItemHandlers[name] = std::shared_ptr<QGraphicsItem>(new QGraphicsEllipseItem(QRectF(-radius, -radius, radius * 2, radius * 2), this));
@@ -30,6 +38,12 @@ signals :
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override {
         emit posChanged(event->scenePos());
         QGraphicsItem::mouseMoveEvent(event);
+    }
+
+public slots:
+    void updatePos(QPointF pos, double theta) {
+        setPos(pos);
+        setTheta(theta);
     }
 
 private:

@@ -6,21 +6,27 @@
 
 namespace DetectionUtilities
 {
-[[maybe_unused]] static QPointF calculatePosition(const QPointF &pos, int currentAngle, int dist, int angle)
+
+struct degrees {};
+struct radians {};
+
+template<typename theta_type>
+[[maybe_unused]] QPointF calculatePosition(double dist, double angle)
 {
-    QPointF calculatedPos = {};
-    double rad = (angle + currentAngle) * M_PI / 180.0;
-    calculatedPos.setX(pos.x() + dist * std::cos(rad));
-    calculatedPos.setY(pos.y() + dist * std::sin(rad));
-    return calculatedPos;
+    return QPointF();
 }
 
-[[maybe_unused]] static QPointF calculatePosition(const QPointF &pos, double currentRad, int dist, double rad)
+template<>
+[[maybe_unused]] inline QPointF calculatePosition<radians>(double dist, double rad)
 {
-    QPointF calculatedPos = {};
-    rad += currentRad;
-    calculatedPos.setX(pos.x() + dist * std::cos(rad));
-    calculatedPos.setY(pos.y() + dist * std::sin(rad));
-    return calculatedPos;
+    return QPointF(dist * std::cos(rad), dist * std::sin(rad));
 }
-};
+
+template<>
+[[maybe_unused]] inline QPointF calculatePosition<degrees>(double dist, double angle)
+{
+    double rad = (angle) * M_PI / 180.0;
+    return calculatePosition<radians>(dist, rad);
+}
+
+}
