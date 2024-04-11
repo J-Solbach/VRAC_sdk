@@ -7,6 +7,8 @@
 #include <numeric>
 #include <range/v3/all.hpp>
 
+namespace vrac::strategy::goap {
+
 namespace planner::details {
 
     template <typename Node, typename action_pool_type, typename world_state_snapshot_t>
@@ -124,4 +126,6 @@ namespace planner {
         auto plans = details::gather_all_plans<plan_type>(rootNode);
         return details::find_cheapest_plan(plans);
     }
+}
+
 }

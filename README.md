@@ -21,7 +21,7 @@ To ensure support for C++17, we use 4 header only libraries (fmt and range v3 ar
 - range-v3: https://github.com/ericniebler/range-v3
 - nlohmnan-json: https://github.com/nlohmann/json
 - fmt: https://github.com/fmtlib/fmt
-- fmt-log: https://github.com/MengRao/fmtlog
+- spdlog: https://github.com/gabime/spdlog
 
 ## Getting started
 
@@ -170,7 +170,7 @@ auto manager = new strategyManager(stm);
 
 The path finding part needs a little setup to function. First you need to setup a robot and a playground from the qt_graphics_model. Then you have to select a policy (adapted to your motor drive system), setup the robot boundingRect and its position. Then you can connect the slots of the path finder.
 
-```c+++
+```c++
 path_finder<holonome> pf; // or path_finder<differential> path_finder;
 pf.set_hitbox(robot.boundingRect());
 pf.set_current_pos(robot.pos());
@@ -182,6 +182,32 @@ connect(&pf, &path_finder<selected_policy>::new_path_found, &playground, &Playgr
 connect(&robot, &Robot::posChanged, &pf, &path_finder<holonome>::set_current_pos);
 ```
 
+
+### logging
+
+The logging part is quick and easy to setup. You only need to write the following code and thats it ! 
+
+```c++
+// IN your main file
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
+
+int main(int argc, char *argv[])
+{
+    auto logger = spdlog::basic_logger_mt("vrac_logger", QDir::homePath().toStdString() + "/VRAC/logs/testlog.txt", true);
+    spdlog::set_default_logger(logger);
+    spdlog::flush_every(std::chrono::milliseconds(250));
+}
+
+
+// When you need to log something :
+spdlog::info("Some info");
+spdlog::warn("the action {} failed", action_name);
+spdlog::error("");
+// ETC.
+
+
+```
 
 
 

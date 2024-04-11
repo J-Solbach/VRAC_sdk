@@ -2,6 +2,8 @@
 
 #include <string>
 
+namespace vrac::strategy::goap {
+
 template <typename world_state_snapshot_t, typename runner_type, typename cost_calculator_type>
 class action
 {
@@ -28,3 +30,5 @@ private:
     runner_type runner_;
     cost_calculator_type cost_calculator_;
 };
+
+}

@@ -3,6 +3,8 @@
 #include <deque>
 #include "planner.hpp"
 
+namespace vrac::strategy::goap {
+
 template<typename world_state_type, typename goal_type, typename action_type>
 class goap_manager {
     using goal_pool = std::vector<goal_type>;
@@ -54,3 +56,5 @@ private:
     goal_type *current_goal;
     plan_type plan;
 };
+
+}

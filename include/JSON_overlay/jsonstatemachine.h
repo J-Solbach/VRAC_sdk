@@ -6,6 +6,10 @@
 #include "strategy/STM/stm.h"
 #include "strategy/STM/transition.h"
 
+namespace vrac::json_overlay {
+
+using namespace strategy::state_machines;
+
 template<typename context_type>
 struct action_factory{
     using action_t = state<context_type, nlohmann::json>;
@@ -14,18 +18,19 @@ struct action_factory{
 
     static meta_factory_type meta_factory;
 
-    static action_t * make_action(const std::string & action_type, const std::string & action_tag, const action_t::params_type & params) {
+    static action_t * make_action(const std::string & action_type, const std::string & action_tag, const typename action_t::params_type & params) {
         return std::invoke(meta_factory.at(action_type), action_tag, params);
     }
 };
 
 template<typename action_factory_t, typename context_t>
-Stm<state<context_t, nlohmann::json>>* make_stm_from_json(context_t & ctx, std::string filename, std::string dir)
+Stm<context_t, nlohmann::json>* make_stm_from_json(context_t & ctx, std::string filename, std::string dir)
 {
     using state_type = state<context_t, nlohmann::json>;
 
-    std::string path = dir + filename + ".json";
+    std::string path = fmt::format("{}/{}.json", dir, filename);
     std::ifstream f(path);
+
     nlohmann::json json = nlohmann::json::parse(f);
 
     const auto make_action = [&](const nlohmann::json & j_action) -> std::pair<std::string, state_type *> {
@@ -46,7 +51,7 @@ Stm<state<context_t, nlohmann::json>>* make_stm_from_json(context_t & ctx, std::
                            | ranges::views::transform([&](const auto & j_transition) -> transition {
                                  return transition {
                                      j_transition.at("destination").template get<std::string>(),
-                                     Event{
+                                     event{
                                          j_transition.at("type").template get<std::string>(),
                                          new_state->get_checksum()
                                      }
@@ -72,7 +77,9 @@ Stm<state<context_t, nlohmann::json>>* make_stm_from_json(context_t & ctx, std::
         states.emplace(action);
     });
 
-    return new Stm<state_type>(filename, ctx, entry_state, std::move(states));
+    return new Stm<context_t, nlohmann::json>(filename, ctx, entry_state, std::move(states));
+}
+
 }
 
 #include <fmt/format.h>

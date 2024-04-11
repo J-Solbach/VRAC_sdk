@@ -6,7 +6,7 @@
 #include "path_step.h"
 #include "range/v3/all.hpp"
 
-namespace path_checker
+namespace vrac::path_finding::path_checker
 {
 template<typename obstacles_t>
 static bool is_area_free(QPolygonF &area, const obstacles_t & obstacles) {
@@ -21,11 +21,7 @@ static bool check_path(const path_t & path, const obstacles_t & obstacles, const
                                 return std::ranges::any_of(obstacles, [&step](const auto & obstacle){
                                    return obstacle.ui_item->collidesWithItem(step.ui_item.get());
                                 });
-        })
-        | ranges::views::transform([&hitbox](const auto & step){
-                                step.ui_item->setPen(QPen(Qt::red, hitbox.width()));
-                                return step;
-                                });
+        });
 
     return std::ranges::empty(invalid_steps);
 }

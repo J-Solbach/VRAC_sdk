@@ -2,6 +2,8 @@
 
 #include <string>
 
+namespace vrac::strategy::goap {
+
 template <typename world_state_snapshot_t, typename priority_calculator_type>
 class goal
 {
@@ -32,3 +34,5 @@ private:
     world_state_snapshot_t preconditions_;
     priority_calculator_type priority_calculator_;
 };
+
+}

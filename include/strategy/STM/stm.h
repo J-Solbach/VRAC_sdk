@@ -1,22 +1,25 @@
 #pragma once
 
 #include "event.h"
+#include "state.h"
 
-#include <fmtlog/fmtlog.h>
+#include <spdlog/spdlog.h>
 #include <fmt/color.h>
 #include <range/v3/all.hpp>
 #include <QObject>
 #include <set>
 
-
-// TODO RAII Stm
-template<typename state_t>
-class Stm : public state_t
+namespace vrac::strategy::state_machines {
+    
+template<typename context_type, typename params_type>
+class Stm : public state<context_type, params_type>
 {
+
+    using state_t = state<context_type, params_type>;
 
 public:
 
-    Stm(std::string name, state_t::context_type & ctx, state_t* initial_state, std::unordered_map<std::string, state_t*> && states) :
+    Stm(std::string name, context_type & ctx, state_t* initial_state, std::unordered_map<std::string, state_t*> && states) :
         state_t(name),
         states(states),
         entry_state(initial_state),
@@ -35,14 +38,13 @@ public:
     }
 
     void start() {
-        Event e{"NoEvent"};
+        event e{"NoEvent"};
         on_entry(ctx,e);
-        on_event(e);
     }
 
     void update() {}
 
-    virtual void on_entry(state_t::context_type &, Event  e) override  {
+    virtual void on_entry(context_type &, event  e) override  {
         if (entry_state == nullptr) {
             return;
         }
@@ -50,12 +52,12 @@ public:
         current_states.clear();
         current_states.push_back(entry_state);
 
-        FMTLOG(fmtlog::INF, "Entering state machine {} -> {}", state_t::name, entry_state);
+        spdlog::info("Entering state machine {} -> {}", state_t::name, *entry_state);
         entry_state->on_entry(ctx,e);
-        state_t::send_event(Event{"NoEvent"});
+        state_t::send_event(event{"NoEvent"});
     }
 
-    virtual std::vector<std::string> on_event(Event e) override
+    virtual std::vector<std::string> on_event(event e) override
     {
         const auto state_transition_map = current_states
                                           | ranges::views::transform([&](auto * state){
@@ -84,10 +86,10 @@ public:
                              })
                            | ranges::to<std::vector>;
 
-        FMTLOG(fmtlog::INF, "{} {} {}",
-               fmt::format("{}",fmt::join(to_be_removed, "")),
+        spdlog::info("{} {} {}",
+               fmt::format("{}", fmt::join(to_be_removed, "")),
                fmt::format("--[{}]-->", e.value),
-               fmt::format("{}",fmt::join(to_be_added, ""))
+               fmt::format("{}", fmt::join(to_be_added, ""))
         );
 
         ranges::for_each(to_be_removed, [&](auto *state){
@@ -99,7 +101,7 @@ public:
         });
 
         current_states.insert(std::end(current_states), std::begin(to_be_added), std::end(to_be_added) );
-        state_t::send_event(Event{"NoEvent"});
+        state_t::send_event(event{"NoEvent"});
         return std::vector<std::string>{};
     }
 
@@ -110,5 +112,7 @@ private:
     std::unordered_map<std::string, state_t*> states;
     std::vector<state_t*> current_states;
     state_t* entry_state;
-    state_t::context_type & ctx;
+    context_type & ctx;
 };
+
+}

@@ -19,8 +19,7 @@ typedef struct vertex
     std::shared_ptr<vertex> previous;
 } vertex;
 
-namespace path_planner
-{
+namespace vrac::path_finding::path_planner {
 
 template<typename vertices_t>
 static std::shared_ptr<vertex> nearest_non_visited_vertex(const vertices_t & vertices) {
