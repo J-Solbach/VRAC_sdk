@@ -6,8 +6,6 @@
 #include "strategy/STM/stm.h"
 #include "strategy/STM/transition.h"
 
-#include <QDebug>
-
 namespace vrac::json_overlay {
 
 using namespace strategy::state_machines;

@@ -10,7 +10,7 @@
 #include <set>
 
 namespace vrac::strategy::state_machines {
-// TODO RAII Stm
+    
 template<typename context_type, typename params_type>
 class Stm : public state<context_type, params_type>
 {
