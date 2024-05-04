@@ -5,12 +5,13 @@
 
 #include <spdlog/spdlog.h>
 #include <fmt/color.h>
+#include <fmt/ranges.h>
 #include <range/v3/all.hpp>
 #include <QObject>
 #include <set>
 
 namespace vrac::strategy::state_machines {
-    
+
 template<typename context_type, typename params_type>
 class Stm : public state<context_type, params_type>
 {
@@ -54,25 +55,29 @@ public:
 
         spdlog::info("Entering state machine {} -> {}", state_t::name, *entry_state);
         entry_state->on_entry(ctx,e);
-        state_t::send_event(event{"NoEvent"});
+        auto noevent = vrac::strategy::state_machines::event{"NoEvent"};
+        on_event(noevent);
     }
 
-    virtual std::vector<std::string> on_event(event e) override
+    virtual std::vector<std::string> on_event(event & e) override
     {
-        const auto state_transition_map = current_states
-                                          | ranges::views::transform([&](auto * state){
-                                                return std::pair{state, state->on_event(e)};
-                                            })
-                                          | ranges::views::filter([](const auto & entry) {
-                                                auto [_, target_states] = entry;
-                                                return !std::empty(target_states);
-                                            })
-                                          | ranges::to<std::unordered_map<state_t*, std::vector<std::string>>>;
+        spdlog::info("{}({}) notified with event : {}", state_t::name, fmt::join(current_states, ","), e.value);
+
+        std::unordered_map<state_t*, std::vector<std::string>> state_transition_map;
+        for (auto * state : current_states) {
+            auto target_states = state->on_event(e);
+
+            if (!std::empty(target_states)) {
+                state_transition_map[state] = target_states;
+            }
+        }
 
         // no transitions in sub states. checking as a state
-        if (std::empty(state_transition_map)) {
+        if (std::empty(state_transition_map) && !e.consumed) {
             return state_t::on_event(e);
         }
+
+        e.consumed = true;
 
         auto to_be_removed = state_transition_map
                              | ranges::views::keys
@@ -96,12 +101,25 @@ public:
             state->on_exit(ctx, e);
             ranges::erase(current_states, ranges::remove(current_states, state), std::end(current_states));
         });
+
+        // state without transitions should just be called and not inserted.
+        ranges::for_each(to_be_added, [&](auto * state){
+            if (!std::empty(state->get_transitions())
+            && ranges::find_if(current_states, [&](auto *cs){
+                return cs->get_name() == state->get_name();
+            }) == std::end(current_states)) return;
+
+            state->on_entry(ctx, e);
+            ranges::erase(to_be_added, ranges::remove(to_be_added, state), std::end(to_be_added));
+        });
+
+        current_states.insert(std::end(current_states), std::begin(to_be_added), std::end(to_be_added) );
         ranges::for_each(to_be_added, [&](auto * state){
             state->on_entry(ctx, e);
         });
 
-        current_states.insert(std::end(current_states), std::begin(to_be_added), std::end(to_be_added) );
-        state_t::send_event(event{"NoEvent"});
+        auto noevent = vrac::strategy::state_machines::event{"NoEvent"};
+        on_event(noevent);
         return std::vector<std::string>{};
     }
 

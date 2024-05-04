@@ -8,6 +8,7 @@ struct event
 {
     std::string value;
     uint16_t checksum = 0xFFFF;
+    bool consumed = false;
 };
 
 constexpr bool operator==(const event &lhs, const event &rhs) {

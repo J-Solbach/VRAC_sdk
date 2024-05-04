@@ -28,7 +28,8 @@ struct obstacle
 
     obstacle(QPolygonF poly, QPolygonF poly_avoidance = QPolygonF()) : poly(poly), poly_avoidance(poly_avoidance) {
         ui_item = std::make_shared<QGraphicsPolygonItem>(poly);
-        ui_item->setPen(QPen(Qt::red, 10));
+        ui_item->setBrush(QBrush(Qt::black));
+        ui_item->setPen(QPen(Qt::red, 5));
         ui_item->setOpacity(1);
 
         if (poly_avoidance.isEmpty()) return;
@@ -57,3 +58,15 @@ struct obstacle
 };
 
 }
+
+#include <fmt/format.h>
+#include <qt_utils/qt_formatters.hpp>
+
+template<>
+struct fmt::formatter<vrac::qt_graphics::models::obstacle> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    static auto format(const vrac::qt_graphics::models::obstacle & val, format_context& ctx) {
+        return fmt::format_to(ctx.out(), "obstacle polygon ({})", val.poly);
+    }
+};

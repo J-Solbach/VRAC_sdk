@@ -24,19 +24,20 @@ public:
     }
 
 public slots:
-    
+
     void addElement(game_element* element) {
         addItem(element);
     }
-    
+
     void on_new_obstacles(const std::vector<obstacle> &newObstacles) {
         for (const auto & obs : newObstacles)
             addItem(obs.ui_item.get());
     }
 
     void on_new_path(const std::vector<path_finding::path_step>& path) {
-        for (const auto & newStep : path)
+        for (const auto & newStep : path) {
             addItem(newStep.ui_item.get());
+        }
     }
 };
 }
