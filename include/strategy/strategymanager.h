@@ -27,7 +27,7 @@ public:
         strategy(strategy)
     {
         game_timer.setInterval(std::chrono::seconds(100));
-        go_back_home_timer.setInterval(std::chrono::seconds(90));
+        go_back_home_timer.setInterval(std::chrono::seconds(85));
         funny_action_timer.setInterval(std::chrono::seconds(98));
         strategy_ticker.setInterval(std::chrono::milliseconds(10));
 

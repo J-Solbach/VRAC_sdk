@@ -14,14 +14,12 @@ class state_signals_slots :  public QObject {
     Q_OBJECT
 public:
     explicit state_signals_slots(){
-        connect(this, &state_signals_slots::send_event, this, &state_signals_slots::on_event, Qt::QueuedConnection);
     }
 
 signals :
-    void send_event(state_machines::event e);
-
+    void send_event(state_machines::event & e);
 public slots:
-    virtual std::vector<std::string> on_event(state_machines::event e) = 0;
+    virtual std::vector<std::string> on_event(state_machines::event & e) = 0;
 };
 
 // TODO RAII
@@ -53,13 +51,20 @@ public:
 
     bool test_checksum(uint16_t incoming_checksum) {
         if (incoming_checksum == 0xFFFF) return true;
-        if (incoming_checksum != checksum ) return false;
-        if (check_counter > 0) check_counter--;
+        if (incoming_checksum != checksum ) {
+            spdlog::info("incoming checksum is not equal to requested checksum {} != {}", incoming_checksum, checksum);
+            return false;
+        }
+
+        if (check_counter > 0) {
+            spdlog::info("check_counter reduced ! remaining checks : {}", check_counter);
+            check_counter--;
+        }
 
         return (check_counter == 0);
     }
 
-    virtual std::vector<std::string> on_event(state_machines::event e) override {
+    virtual std::vector<std::string> on_event(state_machines::event & e) override {
         return transitions
                | ranges::views::filter([&](const auto & transition){
                      return transition.event == e && test_checksum(e.checksum);
@@ -86,7 +91,7 @@ protected:
     std::vector<transition> transitions;
     params_t params;
 
-    std::size_t checksum = 0xFFFF;
+    uint16_t checksum = 0xFFFF;
     std::size_t check_counter = 1;
 };
 

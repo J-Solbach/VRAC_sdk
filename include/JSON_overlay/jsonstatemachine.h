@@ -19,12 +19,18 @@ struct action_factory{
     static meta_factory_type meta_factory;
 
     static action_t * make_action(const std::string & action_type, const std::string & action_tag, const typename action_t::params_type & params) {
-        return std::invoke(meta_factory.at(action_type), action_tag, params);
+        try {
+            return std::invoke(meta_factory.at(action_type), action_tag, params);
+        }
+        catch(const std::out_of_range & e) {
+            spdlog::error("{} action is not in the meta factory", action_type);
+            return std::invoke(meta_factory.at("End"), action_tag, params);
+        }
     }
 };
 
 template<typename action_factory_t, typename context_t>
-Stm<context_t, nlohmann::json>* make_stm_from_json(context_t & ctx, std::string filename, std::string dir)
+Stm<context_t, nlohmann::json>* make_stm_from_json(context_t & ctx, std::string filename, std::string dir, std::string meta_action_dir)
 {
     using state_type = state<context_t, nlohmann::json>;
 
@@ -37,13 +43,13 @@ Stm<context_t, nlohmann::json>* make_stm_from_json(context_t & ctx, std::string 
         auto * new_state = [&]() -> state<context_t, nlohmann::json> * {
             if (j_action.contains("file"))
             {
-                return make_stm_from_json<action_factory_t>(ctx,j_action.at("file").get<std::string>(), dir);
+                return make_stm_from_json<action_factory_t>(ctx,j_action.at("file").get<std::string>(), meta_action_dir, meta_action_dir);
             }
             else
             {
                 std::string action_type = j_action.at("action").get<std::string>();
                 std::string action_tag = j_action.at("tag").get<std::string>();
-                return action_factory_t::make_action(action_type, action_tag, j_action.at("parameters"));
+                return action_factory_t::make_action(action_type, action_tag, j_action.value("parameters", nlohmann::json{}));
             }
         }();
 

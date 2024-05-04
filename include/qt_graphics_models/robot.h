@@ -9,7 +9,10 @@ class robot_graphic_item : public QObject, public QGraphicsPixmapItem
 {
     Q_OBJECT
 public:
-    robot_graphic_item() { setFlags(QGraphicsItem::ItemIsMovable); }
+    robot_graphic_item() {
+        setPos(QPointF(500,500));
+        setFlags(QGraphicsItem::ItemIsMovable);
+    }
 
     void setPos(QPointF pos) {
         QGraphicsPixmapItem::setPos(pos - boundingRect().center());
