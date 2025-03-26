@@ -10,6 +10,9 @@
 #include "path_step.h"
 #include "path_planner.h"
 
+#include <spdlog/spdlog.h>
+#include <fmt/ranges.h>
+
 namespace vrac::path_finding {
 
 struct holonome;
@@ -26,8 +29,10 @@ signals :
 
 public slots:
     virtual void set_obstacles(const std::vector<qt_graphics::models::obstacle> & obstacles) = 0;
-    virtual void set_static_obstacles(const std::vector<qt_graphics::models::obstacle> & static_obstacles) = 0;
+    virtual void set_static_obstacles(const std::vector<qt_graphics::models::obstacle> & obstacles) = 0;
+
     virtual void set_current_pos(QPointF pos) = 0;
+    virtual void set_emergency_stop_status(bool) = 0;
     virtual void find_new_path() = 0;
 
 protected slots:
@@ -64,9 +69,10 @@ public :
         path.clear();
     }
 
+    void reset() {path.clear();}
     void set_ignore_static_obstacles(bool newIgnoreStaticObstacle) {ignore_static_obstacles = newIgnoreStaticObstacle;}
     void set_collision_hysteresis(int newCollisionHysteresis) {collision_hysteresis = newCollisionHysteresis;}
-    
+
     std::vector<qt_graphics::models::obstacle> get_all_obstacles() {
         auto all_obstacles = obstacles;
         if (!ignore_static_obstacles) {
@@ -77,11 +83,12 @@ public :
 
     void set_new_goal(QPointF goal, double theta)
     {
-        theta_end = theta;
-        set_new_goal(path_step(current_pos, goal, hitbox.width()));
+        set_new_goal(path_step(current_pos, goal, hitbox.width()), theta);
     }
 
-    void set_new_goal(path_step path_step) {
+    void set_new_goal(path_step path_step, double theta) {
+        theta_end = theta;
+        spdlog::info("[path finder] new goal received : {} {} {}", path_step.goal.x(), path_step.goal.y(), theta_end);
         path = {path_step};
     }
 
@@ -89,12 +96,25 @@ public :
         obstacles.clear();
         obstacles = ranges::copy(obs);
     }
-    virtual void set_static_obstacles(const std::vector<qt_graphics::models::obstacle> & s_obs) override { static_obstacles = ranges::copy(s_obs); }
+
+    virtual void set_static_obstacles(const std::vector<qt_graphics::models::obstacle> & s_obs) override {
+        static_obstacles.clear();
+        static_obstacles = ranges::copy(s_obs);
+    }
+
     virtual void set_current_pos(QPointF pos) override {
         current_pos = pos;
         if (std::empty(path)) return;
         path.front().setStart(current_pos);
     }
+
+    virtual void set_emergency_stop_status(bool sts) override {
+        if (emergency_stop_status != sts) {
+            spdlog::warn("Emergency stop status changed to {}", (sts) ? "active" : "unactive");
+        }
+        emergency_stop_status = sts;
+    }
+    bool get_emergency_stop_status() {return emergency_stop_status;}
 
     virtual void find_new_path() override
     {
@@ -106,6 +126,8 @@ public :
             }
             return;
         }
+
+        spdlog::debug("[path finder] new path found : {}", path);
 
         if (blocked_timer.isActive()) {
             blocked_timer.stop();
@@ -119,7 +141,7 @@ public :
 
         if (std::empty(path)) return;
 
-        if (path.front().ui_item->path().length() < 10) {
+        if (path.front().ui_item->path().length() < 5) {
             move_finished();
         }
 
@@ -130,7 +152,9 @@ public :
 
     virtual void move_finished() override {path.erase(path.begin());}
 
-    const std::vector<path_step> &get_path() const {return path;}
+    void set_path(const auto & new_path) {path = new_path;}
+    const std::vector<path_step> & get_path() const {return path;}
+    double get_theta_end() const {return theta_end;}
 private :
     std::vector<qt_graphics::models::obstacle> obstacles;
     std::vector<qt_graphics::models::obstacle> static_obstacles;
@@ -144,8 +168,8 @@ private :
     QTimer loop_timer;
 
     bool ignore_static_obstacles = false;
+    bool emergency_stop_status = false;
     int collision_hysteresis = 2;
-    int collision_radius = 1000;
     int collision_count = 0;
     int holo_mode = false;
     double theta_end = 0;
@@ -173,39 +197,25 @@ struct differential {
     template<typename path_finder_t>
     static void update(path_finder_t & path_finder) {
 
-        if (path_checker::check_path(path_finder.path, path_finder.get_all_obstacles(), path_finder.hitbox)) {
-
-            if (path_finder.collision_count > path_finder.collision_hysteresis) {
-                path_finder.find_new_path();
-            }
-
-            path_finder.collision_count = 0;
-
-            for (auto & step : path_finder.path) {
-                step.ui_item->setPen(QPen(Qt::blue, path_finder.hitbox.width()));
-            }
-
-            if (path_finder.delay_timer.isActive()) {
-                path_finder.delay_timer.stop();
-            }
-            return;
+        if (path_finder.get_emergency_stop_status()) {
+            path_finder.find_new_path();
         }
+        else {
+            if (!path_checker::check_path(path_finder.path, path_finder.get_all_obstacles(), path_finder.hitbox)) {
+                path_finder.collision_count++;
 
-        for (auto & step : path_finder.path) {
-            step.ui_item->setPen(QPen(Qt::red, path_finder.hitbox.width()));
-        }
+                if (path_finder.collision_count < path_finder.collision_hysteresis) {
+                    return;
+                }
 
-        path_finder.collision_count++;
-        if (path_finder.collision_count < path_finder.collision_hysteresis) {
-            return;
+                for (auto & step : path_finder.path) {
+                    step.ui_item->setPen(QPen(Qt::red, path_finder.hitbox.width()));
+                }
+
+                spdlog::debug("[path finder] path collide with an obstacle ! EMERGENCY STOP");
+                emit path_finder.emergency_stop();
+            }
         }
-        emit path_finder.emergency_stop();
-        if (!path_finder.delay_timer.isActive()) path_finder.delay_timer.start(); // Calc new Path at timeout
     }
 };
-
-
-
-
-
 }

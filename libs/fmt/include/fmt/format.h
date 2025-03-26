@@ -32,7 +32,6 @@
 
 #ifndef FMT_FORMAT_H_
 #define FMT_FORMAT_H_
-#define FMT_HEADER_ONLY
 
 #include <cmath>             // std::signbit
 #include <cstdint>           // uint32_t
