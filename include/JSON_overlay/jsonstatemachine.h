@@ -34,7 +34,7 @@ Stm<context_t, nlohmann::json>* make_stm_from_json(context_t & ctx, std::string 
 {
     using state_type = state<context_t, nlohmann::json>;
 
-    std::string path = fmt::format("{}/{}.json", dir, filename);
+    std::string path = fmt::format("{}/{}", dir, filename);
     std::ifstream f(path);
 
     nlohmann::json json = nlohmann::json::parse(f);
@@ -43,7 +43,7 @@ Stm<context_t, nlohmann::json>* make_stm_from_json(context_t & ctx, std::string 
         auto * new_state = [&]() -> state<context_t, nlohmann::json> * {
             if (j_action.contains("file"))
             {
-                return make_stm_from_json<action_factory_t>(ctx,j_action.at("file").get<std::string>(), meta_action_dir, meta_action_dir);
+                return make_stm_from_json<action_factory_t>(ctx, fmt::format("{}.json", j_action.at("file").get<std::string>()), meta_action_dir, meta_action_dir);
             }
             else
             {

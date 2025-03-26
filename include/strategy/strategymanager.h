@@ -58,6 +58,8 @@ public:
     }
 
     virtual void jack_pulled() override {
+        if(game_timer.isActive()) return;
+
         game_timer.start();
         go_back_home_timer.start();
         funny_action_timer.start();

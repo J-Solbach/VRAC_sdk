@@ -152,7 +152,9 @@ public :
 
     virtual void move_finished() override {path.erase(path.begin());}
 
-    const std::vector<path_step> &get_path() const {return path;}
+    void set_path(const auto & new_path) {path = new_path;}
+    const std::vector<path_step> & get_path() const {return path;}
+    double get_theta_end() const {return theta_end;}
 private :
     std::vector<qt_graphics::models::obstacle> obstacles;
     std::vector<qt_graphics::models::obstacle> static_obstacles;
@@ -216,9 +218,4 @@ struct differential {
         }
     }
 };
-
-
-
-
-
 }

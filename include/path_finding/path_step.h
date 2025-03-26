@@ -84,7 +84,6 @@ struct path_step
         });
 
         std::size_t step = std::distance(std::begin(waypoints), nearest);
-        spdlog::info("Step found : {} -> s {} step {}", step, s, (*nearest));
         ui_item->setPath(details::make_path(waypoints | ranges::views::drop(step)));
     }
 
