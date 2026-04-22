@@ -17,9 +17,9 @@ public:
     }
 
 signals :
-    void send_event(state_machines::event & e);
+    void send_event(state_machines::event e);
 public slots:
-    virtual std::vector<std::string> on_event(state_machines::event & e) = 0;
+    virtual std::vector<std::string> on_event(state_machines::event e) = 0;
 };
 
 // TODO RAII
@@ -41,7 +41,8 @@ public:
 
     state(const std::string & name,  const params_t & params) :
         state_signals_slots(), name {"[" + name + "]"},
-        params(params), checksum(std::hash<std::string>{}(name))
+        params(params),
+        checksum(std::hash<std::string>{}(name))
     {
         checksum += (rand() %0xFFFF);
     }
@@ -52,27 +53,30 @@ public:
     bool test_checksum(uint16_t incoming_checksum) {
         if (incoming_checksum == 0xFFFF) return true;
         if (incoming_checksum != checksum ) {
-            spdlog::info("incoming checksum is not equal to requested checksum {} != {}", incoming_checksum, checksum);
+            //spdlog::info("incoming checksum is not equal to requested checksum {} != {}", incoming_checksum, checksum);
             return false;
         }
 
         if (check_counter > 0) {
-            spdlog::info("check_counter reduced ! remaining checks : {}", check_counter);
             check_counter--;
+            spdlog::info("check_counter reduced ! remaining checks : {}", check_counter);
         }
 
         return (check_counter == 0);
     }
 
-    virtual std::vector<std::string> on_event(state_machines::event & e) override {
+    virtual std::vector<std::string> on_event(state_machines::event e) override {
+
+        if (!test_checksum(e.checksum)) return {};
+
         return transitions
-               | ranges::views::filter([&](const auto & transition){
-                     return transition.event == e && test_checksum(e.checksum);
-                    })
-                | ranges::views::transform([](const auto & transition) {
-                     return transition.target_state;
-                    })
-                | ranges::to<std::vector>;
+            | ranges::views::filter([&](const auto & transition){
+                    return transition.event == e;
+                })
+            | ranges::views::transform([](const auto & transition) {
+                    return transition.target_state;
+                })
+            | ranges::to<std::vector>;
     }
 
     virtual void on_entry(context_t &, state_machines::event) = 0;
@@ -84,6 +88,13 @@ public:
         return checksum;
     }
 
+    void set_parent_checksum(uint16_t cs) {
+        parent_checksum = cs;
+    }
+    uint16_t get_parent_checksum() {
+        return parent_checksum;
+    }
+
     void set_check_counter(std::size_t newCheck_counter) {check_counter = newCheck_counter;}
 
 protected:
@@ -92,6 +103,7 @@ protected:
     params_t params;
 
     uint16_t checksum = 0xFFFF;
+    uint16_t parent_checksum = 0xFFFF;
     std::size_t check_counter = 1;
 };
 

@@ -15,26 +15,25 @@ struct obstacle
 
         ui_item = std::make_shared<QGraphicsPolygonItem>(poly);
         ui_item->setFlags(QGraphicsItem::ItemIsMovable);
-        ui_item_avoidance = std:: make_shared<QGraphicsPolygonItem>();
-        ui_item_avoidance->setParentItem(ui_item.get());
 
         poly_avoidance = generatePolygon(center_pos, radius + robot_width);
-        ui_item_avoidance->setPolygon(poly_avoidance);
+        ui_item_avoidance = new QGraphicsPolygonItem(poly_avoidance, ui_item.get());
 
         ui_item->setBrush(QBrush(Qt::black));
         ui_item->setOpacity(0.5);
         ui_item_avoidance->setPen(QPen(Qt::green, 20));
     }
 
-    obstacle(QPolygonF poly, QPolygonF poly_avoidance = QPolygonF()) : poly(poly), poly_avoidance(poly_avoidance) {
+    obstacle(QPolygonF poly, QPolygonF poly_avoidance = QPolygonF(), QColor color = Qt::black) : poly(poly), poly_avoidance(poly_avoidance) {
         ui_item = std::make_shared<QGraphicsPolygonItem>(poly);
-        ui_item->setBrush(QBrush(Qt::black));
+        ui_item->setBrush(QBrush(color));
         ui_item->setPen(QPen(Qt::red, 5));
         ui_item->setOpacity(1);
-
+        ui_item_avoidance = nullptr;
         if (poly_avoidance.isEmpty()) return;
-        ui_item_avoidance = std::make_shared<QGraphicsPolygonItem>(poly_avoidance);
-        ui_item_avoidance->setParentItem(ui_item.get());
+        ui_item_avoidance = new QGraphicsPolygonItem(poly_avoidance, ui_item.get());
+        ui_item_avoidance->setPen(QPen(Qt::green, 20));
+
     }
 
     static QPolygonF generatePolygon(QPointF center_pos, unsigned int radius) {
@@ -54,7 +53,7 @@ struct obstacle
     QPolygonF poly;
     QPolygonF poly_avoidance;
     std::shared_ptr<QGraphicsPolygonItem> ui_item;
-    std::shared_ptr<QGraphicsPolygonItem> ui_item_avoidance;
+    QGraphicsPolygonItem* ui_item_avoidance = nullptr;
 };
 
 }
@@ -70,3 +69,26 @@ struct fmt::formatter<vrac::qt_graphics::models::obstacle> {
         return fmt::format_to(ctx.out(), "obstacle polygon ({})", val.poly);
     }
 };
+
+#include <nlohmann/json.hpp>
+
+namespace nlohmann {
+
+template<>
+struct adl_serializer<QPointF> {
+    static QPointF from_json(const json & j) {
+        return QPointF(j["x"], j["y"]);
+    }
+};
+
+template<>
+struct adl_serializer<vrac::qt_graphics::models::obstacle> {
+    static vrac::qt_graphics::models::obstacle from_json(const json & j) {
+        QPolygonF poly =j["points"];
+        QPolygonF polyAvoidance = (j.contains("avoidance_points")) ?  j["avoidance_points"] : QPolygonF();
+
+        return vrac::qt_graphics::models::obstacle(poly, polyAvoidance);
+    }
+};
+
+}

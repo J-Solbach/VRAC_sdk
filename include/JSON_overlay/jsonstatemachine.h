@@ -30,7 +30,7 @@ struct action_factory{
 };
 
 template<typename action_factory_t, typename context_t>
-Stm<context_t, nlohmann::json>* make_stm_from_json(context_t & ctx, std::string filename, std::string dir, std::string meta_action_dir)
+Stm<context_t, nlohmann::json>* make_stm_from_json(context_t & ctx, std::string tag, std::string filename, std::string dir, std::string meta_action_dir)
 {
     using state_type = state<context_t, nlohmann::json>;
 
@@ -40,10 +40,13 @@ Stm<context_t, nlohmann::json>* make_stm_from_json(context_t & ctx, std::string 
     nlohmann::json json = nlohmann::json::parse(f);
 
     const auto make_action = [&](const nlohmann::json & j_action) -> std::pair<std::string, state_type *> {
+
+        std::string tag = j_action.at("tag").get<std::string>();
+
         auto * new_state = [&]() -> state<context_t, nlohmann::json> * {
             if (j_action.contains("file"))
             {
-                return make_stm_from_json<action_factory_t>(ctx, fmt::format("{}.json", j_action.at("file").get<std::string>()), meta_action_dir, meta_action_dir);
+                return make_stm_from_json<action_factory_t>(ctx, tag, fmt::format("{}.json", j_action.at("file").get<std::string>()), meta_action_dir, meta_action_dir);
             }
             else
             {
@@ -67,8 +70,6 @@ Stm<context_t, nlohmann::json>* make_stm_from_json(context_t & ctx, std::string 
 
         new_state->set_transitions(std::move(transitions));
 
-        std::string tag = j_action.at("tag").get<std::string>();
-
         return std::pair{tag , new_state};
     };
 
@@ -83,7 +84,7 @@ Stm<context_t, nlohmann::json>* make_stm_from_json(context_t & ctx, std::string 
         states.emplace(action);
     });
 
-    return new Stm<context_t, nlohmann::json>(filename, ctx, entry_state, std::move(states));
+    return new Stm<context_t, nlohmann::json>(tag, ctx, entry_state, std::move(states));
 }
 
 }

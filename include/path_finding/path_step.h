@@ -4,6 +4,8 @@
 #include <QPen>
 #include <QGraphicsPathItem>
 
+#include <range/v3/all.hpp>
+
 namespace vrac::path_finding::details {
     static QPointF calculate_step(std::size_t step, QPointF s, QPointF c1, QPointF c2, QPointF g) {
         double t = (1.0 / 100) * step;
@@ -54,6 +56,7 @@ namespace vrac::path_finding::details {
 }
 
 namespace vrac::path_finding {
+
 struct path_step
 {
     using ui_item_t = std::shared_ptr<QGraphicsPathItem>;
@@ -95,7 +98,22 @@ struct path_step
     std::shared_ptr<QGraphicsPathItem> ui_item;
     std::vector<QPointF> waypoints;
 };
+
+using path_t = std::vector<path_step>;
 }
+
+namespace vrac::path_finding::utils {
+
+    static double get_path_distance(const path_t & path) {
+        auto step_distances = path
+            | ranges::views::transform([](const auto & step) {
+                return QLineF(step.start, step.goal).length();
+            });
+
+        return ranges::accumulate(step_distances, 0.0, std::plus<>());
+    }
+}
+
 
 #include <fmt/core.h>
 #include <fmt/format.h>

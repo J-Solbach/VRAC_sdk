@@ -51,8 +51,7 @@ static std::shared_ptr<vertex> get_shortest_path_rewinder(const vertices_t & ver
 
         current_vertex->visited = true;
 
-        auto goalExist = [&](std::shared_ptr<vertex> neighbor)
-        {
+        auto goalExist = [&](std::shared_ptr<vertex> neighbor) {
             if (neighbor == nullptr) return false;
             qreal totalDist = current_vertex->distance + QLineF(current_vertex->pos, neighbor->pos).length();
             // If it's shorter !
@@ -82,7 +81,9 @@ static std::shared_ptr<vertex> get_shortest_path_rewinder(const vertices_t & ver
 template<typename obstacles_t, typename hitbox_t>
 static void setup_neighbors(std::vector<std::shared_ptr<vertex>>& vertices, const obstacles_t & obstacles, const hitbox_t & hitbox) {
 
-    auto filtered_vertices = vertices | ranges::views::filter([](const auto & vertex) {return vertex != nullptr;});
+    auto filtered_vertices = vertices
+        | ranges::views::filter([](const auto & vertex) {return vertex != nullptr;})
+        | ranges::to<std::vector>;
 
     ranges::for_each(filtered_vertices, [&](auto & vertex){
         vertex->neighbors = filtered_vertices
@@ -97,9 +98,9 @@ static void setup_neighbors(std::vector<std::shared_ptr<vertex>>& vertices, cons
 template<typename obstacles_t>
 static std::vector<std::shared_ptr<vertex>> gather_vertices(const QPointF& start, const QPointF& goal, const obstacles_t & obstacles) {
     std::vector<std::shared_ptr<vertex>> vertices;
-    vertices.push_back(std::make_shared<vertex>(vertex(start, 0)));
+    vertices.push_back(std::make_shared<vertex>(start, 0));
 
-    auto obstacles_vertices =  (obstacles
+    auto obstacles_vertices = obstacles
                             | ranges::views::filter([](const auto & obstacle){
                                  return obstacle.ui_item_avoidance != nullptr;
                             })
@@ -108,28 +109,38 @@ static std::vector<std::shared_ptr<vertex>> gather_vertices(const QPointF& start
                             })
                             | ranges::views::join // all vertex of a the obstacle polygon
                             | ranges::views::transform([](const auto & vertice) {
-                                return std::make_shared<vertex>(vertex(vertice, 0xFFFF)); //0xFFFF for max dist
+                                return std::make_shared<vertex>(vertice, 0xFFFF); //0xFFFF for max dist
                             })
-                            |ranges::to<std::vector>);
+                            |ranges::to<std::vector>;
 
     vertices.insert(vertices.end(), obstacles_vertices.begin(), obstacles_vertices.end());
-    vertices.push_back(std::make_shared<vertex>(vertex(goal, 0xFFFF))); //0xFFFF for max dist
+    vertices.push_back(std::make_shared<vertex>(goal, 0xFFFF)); //0xFFFF for max dist
     return vertices;
 }
 
+
 template<typename obstacles_t, typename hitbox_t>
-static std::vector<path_step> find_path(const QPointF& start, const QPointF& goal, const obstacles_t & obstacles, const hitbox_t & hitbox) {
+static path_t find_path(const QPointF& start, const QPointF& goal, const obstacles_t & obstacles, const hitbox_t & hitbox) {
+
+    if(path_checker::check_path(start, goal, obstacles, hitbox)) {
+        return path_t{
+            path_step(start, goal, hitbox.width())
+        };
+    }
+
     auto vertices = gather_vertices(start, goal, obstacles);
+
     setup_neighbors(vertices, obstacles, hitbox);
+
     std::shared_ptr<vertex> rewinder = get_shortest_path_rewinder(vertices, goal);
 
     // No path available, resetting to straight line to goal, for the moment
     if ( rewinder == nullptr)
     {
-        return std::vector<path_step>();
+        return path_t();
     }
 
-    std::vector<path_step> new_path;
+    path_t new_path;
 
     //BackTracking the path from the rewinder
     while (rewinder->previous != nullptr)
@@ -142,15 +153,59 @@ static std::vector<path_step> find_path(const QPointF& start, const QPointF& goa
 };
 
 template<typename obstacles_t, typename hitbox_t>
-static std::vector<path_step> find_path(const path_step& path_step, const obstacles_t & obstacles, const hitbox_t & hitbox) {
+static path_t find_path(const path_step& path_step, const obstacles_t & obstacles, const hitbox_t & hitbox) {
     return find_path(path_step.start, path_step.goal, obstacles, hitbox);
 }
 
 template<typename obstacles_t, typename hitbox_t>
-static std::vector<path_step> find_path(const std::vector<path_step> &path, const obstacles_t & obstacles, const hitbox_t & hitbox) {
-    if (std::empty(path)) return std::vector<path_step>();
+static path_t find_path(const path_t &path, const obstacles_t & obstacles, const hitbox_t & hitbox) {
+    if (std::empty(path)) return path_t();
 
     return find_path(path.front().start, path.back().goal, obstacles, hitbox);
+}
+
+static path_t get_smallest_path_to_game_element(ranges::range auto & game_elements, auto & path_finder) {
+    if (ranges::empty(game_elements)) {
+        return path_finding::path_t{};
+    }
+
+    auto paths = game_elements
+        | ranges::views::transform([](const auto & ge){
+            return ge.entry_points;
+        })
+        | ranges::views::join
+        | ranges::views::transform([&](const auto & entry_point){
+            return vrac::path_finding::path_t  {
+                vrac::path_finding::path_step(
+                    path_finder.get_current_pos(),
+                    entry_point,
+                    path_finder.get_hitbox().width()
+                )
+            };
+        })
+        | ranges::to<std::vector>;
+
+    ranges::sort(paths, [](const auto & path1, const auto & path2){
+        return vrac::path_finding::utils::get_path_distance(path1) < vrac::path_finding::utils::get_path_distance(path2);
+    });
+
+    auto smallest_path = paths.front();
+
+    for (auto & path : paths) {
+
+        auto optimized_path = vrac::path_finding::path_planner::find_path(
+            path,
+            path_finder.get_all_obstacles(),
+            path_finder.get_hitbox()
+        );
+
+        if (not ranges::empty(optimized_path)) {
+            smallest_path = optimized_path;
+            break;
+        }
+    }
+
+    return std::move(smallest_path);
 }
 
 }

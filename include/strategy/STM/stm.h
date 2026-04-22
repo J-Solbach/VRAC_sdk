@@ -26,9 +26,8 @@ public:
         entry_state(initial_state),
         ctx(ctx)
     {
-        for (const auto & state : states) {
-            state_t * s = state.second;
-            QObject::connect(s, &state_t::send_event, this, &Stm::on_event, Qt::QueuedConnection);
+        for (auto *state : states | ranges::views::values) {
+            state->set_parent_checksum(state_t::get_checksum());
         }
     }
 
@@ -42,8 +41,6 @@ public:
         event e{"NoEvent"};
         on_entry(ctx,e);
     }
-
-    void update() {}
 
     virtual void on_entry(context_type &, event  e) override  {
         if (entry_state == nullptr) {
@@ -59,9 +56,9 @@ public:
         on_event(noevent);
     }
 
-    virtual std::vector<std::string> on_event(event & e) override
+    virtual std::vector<std::string> on_event(event e) override
     {
-        spdlog::info("{}({}) notified with event : {}", state_t::name, fmt::join(current_states, ","), e.value);
+        // spdlog::info("{}({}) notified with event : {}", state_t::name, fmt::join(current_states, ","), e.value);
 
         std::unordered_map<state_t*, std::vector<std::string>> state_transition_map;
         for (auto * state : current_states) {
@@ -91,11 +88,8 @@ public:
                              })
                            | ranges::to<std::vector>;
 
-        spdlog::info("{} {} {}",
-               fmt::format("{}", fmt::join(to_be_removed, "")),
-               fmt::format("--[{}]-->", e.value),
-               fmt::format("{}", fmt::join(to_be_added, ""))
-        );
+        if (not std::ranges::empty(to_be_removed))
+            spdlog::info("{} --[{}]--> {}", fmt::join(to_be_removed, ""), e.value,  fmt::join(to_be_added, ""));
 
         ranges::for_each(to_be_removed, [&](auto *state){
             state->on_exit(ctx, e);
@@ -118,8 +112,10 @@ public:
             state->on_entry(ctx, e);
         });
 
-        auto noevent = vrac::strategy::state_machines::event{"NoEvent"};
-        on_event(noevent);
+        if (not ranges::empty(current_states)) {
+            auto noevent = vrac::strategy::state_machines::event{"NoEvent"};
+            on_event(noevent);
+        }
         return std::vector<std::string>{};
     }
 
